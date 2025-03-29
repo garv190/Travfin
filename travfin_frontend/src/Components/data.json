@@ -1,0 +1,32 @@
+{
+    "categories": [
+      { "value": "", "label": "" }
+     
+    ],
+    "paymentMethods": [
+      { "value": "", "label": "" }
+    
+    ],
+    "transactions": [
+      {
+        "date": "",
+        "amount": "",
+        "type": "",
+        "description": ""
+      },
+      {
+        "date": "",
+        "amount": "",
+        "type": "",
+        "description": ""
+      }
+    ],
+    "expenses": [
+      {
+        "amount": "",
+        "categories": [""],
+        "paymentMethod": "",
+        "description": ""
+      }
+    ]
+  }
