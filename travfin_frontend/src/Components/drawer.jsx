@@ -3,17 +3,17 @@ import { extendTheme, styled } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import BarChartIcon from '@mui/icons-material/BarChart';
-// import DescriptionIcon from '@mui/icons-material/Description';
-import LayersIcon from '@mui/icons-material/Layers';
+import SendIcon from '@mui/icons-material/Send';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
-// import Grid from '@mui/material/Grid2';
 import Grid from '@mui/material/Grid';
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
-import Checkbox from '@mui/material/Checkbox';
-import data from "./data.json";
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+
+
 
 const NAVIGATION = [
   {
@@ -30,6 +30,17 @@ const NAVIGATION = [
     },
     url: 'credit/debit',
     icon: <DashboardIcon />,
+  },
+  {
+    segment: 'recipient',
+    title: 'Create Trip',
+    content: {
+      heading: "Welcome to Add Recipient Dashboard",
+      message: "Manage your financial transactions here.",
+      description: "Track all your credits and debits in one place."
+    },
+    url: 'ar',
+    icon: <SendIcon />,
   },
   {
     segment: 'orders',
@@ -59,18 +70,10 @@ const NAVIGATION = [
     },
     url: 'expenses',
     icon: <BarChartIcon />,
-  },
-  {
-    segment: 'integrations',
-    title: 'Integrations',
-    content: {
-      heading: "Integration Hub",
-      message: "Connect with other services.",
-      description: "Expand your app's capabilities."
-    },
-    url: 'integrations',
-    icon: <LayersIcon />,
-  },
+    children: [
+            
+          ]
+  }
 ];
 
 const demoTheme = extendTheme({
@@ -87,266 +90,153 @@ const demoTheme = extendTheme({
   },
 });
 
-// Styled Components
-const SkeletonWithInput = styled('div')(({ theme, height }) => ({
-  backgroundColor: theme.palette.action.hover,
-  borderRadius: theme.shape.borderRadius,
-  height: `${height}px`,
-  position: 'relative',
-  width: '100%',
-}));
-
-// const InputField = styled('input')(({ theme }) => ({
-//   backgroundColor: theme.palette.background.paper,
-//   border: `1px solid ${theme.palette.divider}`,
-//   borderRadius: theme.shape.borderRadius,
-//   padding: theme.spacing(1),
-//   position: 'absolute',
-//   top: 0,
-//   left: 0,
-//   width: '100%',
-//   height: '100%',
-//   boxSizing: 'border-box',
-//   zIndex: 1,
-//   '&:focus': {
-//     outline: 'none',
-//     borderColor: theme.palette.primary.main,
-//   },
-// }));
-
-
-
-
-
-
-
-
 const InputField = styled('input')(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' 
-    ? theme.palette.background.default  // Dark mode background
-    : theme.palette.background.paper,   // Light mode background
-  color: theme.palette.text.primary,    // Adjust text color for readability
+  width: '100%',
+  padding: '12px',
+  borderRadius: '4px',
   border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(1),
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  boxSizing: 'border-box',
-  zIndex: 1,
-  transition: 'all 0.3s ease',  // Smooth transition when switching themes
-  '&:focus': {
-    outline: 'none',
-    borderColor: theme.palette.primary.main,
-  },
-}));
-
-
-
-
-
-
-
-
-
-
-
-
-const SkeletonWithButton = styled('div')(({ theme, height }) => ({
-  backgroundColor: theme.palette.action.hover,
-  borderRadius: theme.shape.borderRadius,
-  height: `${height}px`,
-  position: 'relative',
-  width: '100%',
+  marginBottom: '16px',
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
 }));
 
 const StyledButton = styled('button')(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
   border: 'none',
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(1),
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  boxSizing: 'border-box',
-  zIndex: 1,
+  borderRadius: '4px',
+  padding: '12px 24px',
   cursor: 'pointer',
-  fontSize: '1rem',
-  fontWeight: 500,
+  fontSize: '16px',
   '&:hover': {
     backgroundColor: theme.palette.primary.dark,
   },
-  '&:active': {
-    backgroundColor: theme.palette.primary.light,
-  },
-  '&:focus': {
-    outline: 'none',
-    boxShadow: `0 0 0 2px ${theme.palette.primary.light}`,
-  },
+  '&:disabled': {
+    backgroundColor: theme.palette.action.disabled,
+    cursor: 'not-allowed'
+  }
 }));
-
-const SkeletonWithDropup = styled('div')(({ theme, height }) => ({
-  backgroundColor: theme.palette.action.hover,
-  borderRadius: theme.shape.borderRadius,
-  height: `${height}px`,
-  position: 'relative',
-  width: '100%',
-}));
-
-const DropupButton = styled('button')(({ theme}) => ({
-  backgroundColor: theme.palette.mode === 'dark' 
-    ? theme.palette.action.selected  // Dark mode background
-    : theme.palette.action.hover,    // Light mode background
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(1),
-  // position: 'absolute',
-  position: 'relative',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  boxSizing: 'border-box',
-  transition: 'background-color 0.3s ease', // Smooth transition on theme switch
-  zIndex: 1,
-  cursor: 'pointer',
-  textAlign: 'left',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  '&:focus': {
-    outline: 'none',
-    borderColor: theme.palette.primary.main,
-  },
-}));
-
-const DropupList = styled('ul')(({ theme }) => ({
-  position: 'absolute',
-  bottom: '100%',
-  left: 0,
-  width: '100%',
-  backgroundColor: theme.palette.mode === 'dark' 
-    ? theme.palette.action.selected  // Dark mode background
-    : theme.palette.action.hover,    // Light mode background
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: `${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0 0`,
-  boxShadow: theme.shadows[2],
-  margin: 0,
-  padding: 0,
-  listStyle: 'none',
-  zIndex: 2,
-  maxHeight: '200px',
-  overflowY: 'auto',
-}));
-
-const DropupItem = styled('li')(({ theme }) => ({
-  padding: theme.spacing(1),
-  display: 'flex',
-  alignItems: 'center',
-  cursor: 'pointer',
-  '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-  },
-}));
-
-const CheckboxLabel = styled('span')({
-  marginLeft: '8px',
-});
-
-const CheckboxDropup = ({ options, selected = [], onSelect, placeholder = 'Select...' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropupRef = React.useRef(null);
-
-  const handleCheckboxChange = (option) => {
-    const isSelected = selected.some(item => item.value === option.value);
-    if (isSelected) {
-      onSelect(selected.filter(item => item.value !== option.value));
-    } else {
-      onSelect([...selected, option]);
-    }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropupRef.current && !dropupRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <div ref={dropupRef} style={{ position: 'relative' }}>
-      <SkeletonWithDropup height={40}>
-        <DropupButton onClick={() => setIsOpen(!isOpen)}>
-          {selected.length > 0 
-            ? selected.map(item => item.label).join(', ') 
-            : placeholder}
-          <span style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}>
-            ▼
-          </span>
-        </DropupButton>
-      </SkeletonWithDropup>
-      
-      {isOpen && (
-        <DropupList>
-          {options.map((option) => (
-            <DropupItem
-              key={option.value}
-              onClick={() => handleCheckboxChange(option)}
-            >
-              <Checkbox
-                checked={selected.some(item => item.value === option.value)}
-                onChange={() => handleCheckboxChange(option)}
-                onClick={(e) => e.stopPropagation()}
-                color="primary"
-              />
-              <CheckboxLabel>{option.label}</CheckboxLabel>
-            </DropupItem>
-          ))}
-        </DropupList>
-      )}
-    </div>
-  );
-};
 
 export default function DashboardLayoutBasic(props) {
+  
+const [dynamicNavigation, setDynamicNavigation] = useState([]);
   const { window } = props;
   const navigate = useNavigate();
-  const [userf, setUserf] = useState({ name: "", e: "" });
+  const [user, setUser] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(true);
   const [currentSegment, setCurrentSegment] = useState('dashboard');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  // Trip Management
+  const [tripName, setTripName] = useState('');
+  const [participantEmails, setParticipantEmails] = useState('');
+  const [trips, setTrips] = useState([]);
+  const [tripLoading, setTripLoading] = useState(false);
+
+  // Expense Management
   const [amount, setAmount] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [selectedTrip, setSelectedTrip] = useState('');
   const [description, setDescription] = useState('');
-  const [expenses, setExpenses] = useState(data.expenses);
+  const [expenses, setExpenses] = useState([]);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [participants, setParticipants] = useState([]);
+  const [shares, setShares] = useState({});
 
-  const findNavigationItem = (segment) => {
-    for (const item of NAVIGATION) {
-      if (item.segment === segment) return item;
-    }
-    return NAVIGATION.find(item => item.segment === 'dashboard');
-  };
 
-  const currentItem = findNavigationItem(currentSegment);
-
-  const router = React.useMemo(() => {
-    return {
-      pathname: `/${currentSegment}`,
-      searchParams: new URLSearchParams(),
-      navigate: (path) => {
-        const segment = path.split('/').pop();
-        setCurrentSegment(segment);
+  useEffect(() => {
+    const baseNav = [
+      {
+        kind: 'header',
+        title: 'Applications',
       },
-    };
-  }, [currentSegment]);
+      {
+        segment: 'dashboard',
+        title: 'Credit/Debit',
+        // ... (rest of dashboard config)
+      },
+      {
+        segment: 'recipient',
+        title: 'Create Trip',
+        // ... (rest of recipient config)
+      },
+      {
+        segment: 'orders',
+        title: 'Add Expense',
+        // ... (rest of orders config)
+      },
+      {
+        kind: 'divider',
+      },
+      {
+        kind: 'header',
+        title: 'Records',
+      },
+      {
+        segment: 'expenses',
+        title: 'Your Expenses',
+        content: {
+          heading: "Expense Reports",
+          message: "View detailed expense analytics.",
+          description: "Analyze your spending patterns over time."
+        },
+        url: 'expenses',
+        icon: <BarChartIcon />,
+        children: trips.map(trip => ({
+          segment: `expenses/${trip._id}`,
+          title: trip.name,
+          url: `expenses/${trip._id}`,
+        }))
+      }
+    ];
+    
+    setDynamicNavigation(baseNav);
+  }, [trips]); // Rebuild navigation when trips change
+
+  
+
+
+
+
+
+
+
+
+
+
+
+// Add this useEffect to load participants when trip is selected
+useEffect(() => {
+  const fetchParticipants = async () => {
+    if (selectedTrip) {
+      try {
+        const response = await fetch(`http://localhost:3500/trips/${selectedTrip}`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success) {
+          setParticipants(data.trip.participants);
+          // Initialize shares
+          const initialShares = {};
+          data.trip.participants.forEach(p => {
+            initialShares[p._id] = 0;
+          });
+          setShares(initialShares);
+        }
+      } catch (error) {
+        setError("Failed to load trip details");
+      }
+    }
+  };
+  fetchParticipants();
+}, [selectedTrip]);
+
+
+
+
+
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -356,19 +246,15 @@ export default function DashboardLayoutBasic(props) {
           credentials: "include",
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
         const data = await response.json();
         if (data.success) {
-          setUserf({ name: data.user1, e: data.detail1 });
-        } else {
-          navigate("/signin");
+          setUser({ name: data.user1, email: data.detail1 });
+          fetchTrips();
         }
       } catch (error) {
-        console.error("Fetch error:", error);
-        navigate("/");
+        setError("Failed to load user data");
       } finally {
         setLoading(false);
       }
@@ -377,202 +263,292 @@ export default function DashboardLayoutBasic(props) {
     fetchUser();
   }, [navigate]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newExpense = {
-      amount,
-      categories: selectedCategories.map(c => c.label),
-      paymentMethod: paymentMethod?.label || '',
-      description,
-      date: new Date().toISOString()
-    };
-    
-    setExpenses([...expenses, newExpense]);
-    
-    setAmount('');
-    setSelectedCategories([]);
-    setPaymentMethod(null);
-    setDescription('');
-    
-    alert('Expense added successfully!');
+  const fetchTrips = async () => {
+    try {
+      const response = await fetch("http://localhost:3500/user/trips", {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (data.success) setTrips(data.trips);
+    } catch (error) {
+      setError("Failed to load trips");
+    }
+  };
+  
+
+  const handleCreateTrip = async () => {
+    if (!tripName || !participantEmails) {
+      setError("Trip name and participant emails are required");
+      return;
+    }
+
+    setTripLoading(true);
+    try {
+      const response = await fetch("http://localhost:3500/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          tripName,
+          participantEmails: participantEmails.split(',').map(e => e.trim())
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to create trip");
+
+      setSuccess(`Trip "${tripName}" created successfully!`);
+      setTripName('');
+      setParticipantEmails('');
+      fetchTrips();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setTripLoading(false);
+    }
   };
 
-  if (loading) return <p>Loading...</p>;
+  const handleSubmitExpense = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedTrip || !amount) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    setExpenseLoading(true);
+    try {
+      const response = await fetch("http://localhost:3500/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          tripId: selectedTrip,
+          amount: parseFloat(amount),
+          description,
+          shares
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to add expense");
+
+      setSuccess("Expense added successfully!");
+      setAmount('');
+      setDescription('');
+      setSelectedTrip('');
+      fetchTrips();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setExpenseLoading(false);
+    }
+  };
+
+  // useEffect(() => {
+  //   if (selectedTrip) {
+  //     fetch(`http://localhost:3500/trips/${selectedTrip}`, {
+  //       credentials: "include"
+  //     })
+  //       .then(res => res.json())
+  //       .then(data => {
+  //         if (data.success) {
+  //           setParticipants(data.trip.participants);
+  //           const initialShares = {};
+  //           data.trip.participants.forEach(p => {
+  //             initialShares[p._id] = 0;
+  //           });
+  //           setShares(initialShares);
+  //         }
+  //       });
+  //   }
+  // }, [selectedTrip]);
+
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </div>
+  );
 
   return (
     <AppProvider 
       navigation={NAVIGATION} 
-      router={router}
+      router={{
+        pathname: `/${currentSegment}`,
+        searchParams: new URLSearchParams(),
+        navigate: (path) => setCurrentSegment(path.split('/').pop()),
+      }}
       theme={demoTheme} 
       window={window}  
-      title="TraFin"
+      title={"TravFin"}
     >
-      <DashboardLayout>
+      <DashboardLayout title="TravFin">
         <PageContainer>
           <Grid container spacing={2}>
-            <Grid size={12}>
-              <div>
-                Hello <span className='font-bold'>{userf.name}</span>!
-              </div>
-              <p>Email: {userf.e}</p>
-              
-              <div style={{ margin: '16px 0' }}>
-                {currentItem?.content ? (
-                  <>
-                    <h2 className="text-xl font-semibold">{currentItem.content.heading}</h2>
-                    <p className="mt-2 text-gray-700">{currentItem.content.message}</p>
-                    <p className="mt-1 text-sm text-gray-500">{currentItem.content.description}</p>
-                  </>
-                ) : (
-                  <p>Select a section to view content</p>
-                )}
+            <Grid item xs={12}>
+              <div style={{ padding: '16px' }}>
+                <h2>Hello <span style={{ fontWeight: 'bold' }}>{user.name}</span>!</h2>
+                <p>Email: {user.email}</p>
+                
+                {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+                {success && <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>}
               </div>
             </Grid>
 
             {currentSegment === 'dashboard' && (
-              <Grid size={12}>
+              <Grid item xs={12}>
                 <div style={{ display: 'flex', gap: '32px', margin: '24px 0'}}>
                   <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', flex: 1 }}>
                     <h3 style={{ margin: 0, color: '#2e7d32' }}>Total Owned</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: 'black' }}>₹12,450.00</p>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000' }}>₹0.00</p>
                   </div>
                   <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', flex: 1 }}>
                     <h3 style={{ margin: 0, color: '#d32f2f' }}>Total Owed</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: 'black' }}>₹8,250.00</p>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000'}}>₹0.00</p>
                   </div>
                 </div>
 
                 <div style={{ margin: '24px 0' }}>
-                  <h3>Recent Transactions</h3>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#f5f5f5' }}>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Date</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Amount</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Type</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Description</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.transactions.map((transaction, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                          <td style={{ padding: '12px' }}>{transaction.date}</td>
-                          <td style={{ padding: '12px' }}>₹{transaction.amount}</td>
-                          <td style={{ 
-                            padding: '12px', 
-                            color: transaction.type === 'credit' ? '#2e7d32' : '#d32f2f',
-                            textTransform: 'capitalize'
-                          }}>
-                            {transaction.type}
-                          </td>
-                          <td style={{ padding: '12px' }}>{transaction.description}</td>
-                        </tr>
+                  <h3>Your Trips</h3>
+                  {trips.length > 0 ? (
+                    <ul>
+                      {trips.map(trip => (
+                        <li key={trip._id} style={{ marginBottom: '8px' }}>
+                          {trip.name} - {trip.participants.length} participants
+                        </li>
                       ))}
-                    </tbody>
-                  </table>
+                    </ul>
+                  ) : (
+                    <p>No trips yet. Create one to get started!</p>
+                  )}
+                </div>
+              </Grid>
+            )}
+
+            {currentSegment === 'recipient' && (
+              <Grid item xs={12}>
+                <div style={{ padding: '16px' }}>
+                  <h2>Create New Trip</h2>
+                  <InputField
+                    placeholder="Trip Name"
+                    value={tripName}
+                    onChange={(e) => setTripName(e.target.value)}
+                  />
+                  <InputField
+                    placeholder="Participant Emails (comma separated)"
+                    value={participantEmails}
+                    onChange={(e) => setParticipantEmails(e.target.value)}
+                  />
+                  <StyledButton 
+                    onClick={handleCreateTrip}
+                    disabled={tripLoading}
+                  >
+                    {tripLoading ? <CircularProgress size={24} /> : "Create Trip"}
+                  </StyledButton>
                 </div>
               </Grid>
             )}
 
             {currentSegment === 'orders' && (
-              <Grid size={12}>
-                <form onSubmit={handleSubmit}>
-                  <Grid container spacing={2}>
-                    <Grid size={4}>
-                      <SkeletonWithInput height={40}>
-                        <InputField 
-                          placeholder="Enter amount" 
-                          type="number"
+              <Grid item xs={12}>
+                <div style={{ padding: '16px' }}>
+                  <h2>Add New Expense</h2>
+                  <form onSubmit={handleSubmitExpense}>
+                    <InputField 
+                      placeholder="Enter amount" 
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      required
+                    />
 
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                          required
+                    <select
+                      value={selectedTrip}
+                      onChange={(e) => setSelectedTrip(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '16px',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc'
+                      }}
+                      required
+                    >
+                      <option value="">Select Trip</option>
+                      {trips.map(trip => (
+                        <option key={trip._id} value={trip._id}>{trip.name} ({new Date(trip.createdAt).toLocaleDateString()})</option>
+                      ))}
+                    </select>
+
+                    <textarea
+                      placeholder="Description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '16px',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc',
+                        minHeight: '100px'
+                      }}
+                    />
+
+                    {participants.map(participant => (
+                      <div key={participant._id} style={{ marginBottom: '16px' }}>
+                        <label>{participant.name || participant.email}</label>
+                        <InputField
+                          type="number"
+                          placeholder="Amount"
+                          value={shares[participant._id] || 0}
+                          onChange={(e) => setShares(prev => ({
+                            ...prev,
+                            [participant._id]: parseFloat(e.target.value) || 0
+                          }))}
                         />
-                      </SkeletonWithInput>
-                    </Grid>
-                    
-                    <Grid size={4} >
-                      <CheckboxDropup
-                        options={data.categories}
-                        selected={selectedCategories}
-                        onSelect={setSelectedCategories}
-                        placeholder="Name of individual"
-                      />
-                    </Grid>
-                    
-                    <Grid size={4}>
-                      <CheckboxDropup    
-                                  
-                        options={data.paymentMethods}
-                        selected={paymentMethod ? [paymentMethod] : []}
-                        onSelect={(selected) => setPaymentMethod(selected[0] || null)}
-                        placeholder="Payment method"
-                      />
-                    </Grid>
-                    
-                    <Grid size={12}>
-                      <SkeletonWithInput height={80} style={{ marginTop: '8px' }}>
-                        <textarea 
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid #ccc',
-                            resize: 'none',
-                            boxSizing: 'border-box',
-                          }}
-                          placeholder="Add description (optional)"
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                        />
-                      </SkeletonWithInput>
-                    </Grid>
-                    
-                    <Grid size={12}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-                        <div style={{ width: '200px' }}>
-                          <SkeletonWithButton height={40}>
-                            <StyledButton type="submit">
-                              Add Transaction
-                            </StyledButton>
-                          </SkeletonWithButton>
-                        </div>
                       </div>
-                    </Grid>
-                  </Grid>
-                </form>
+                    ))}
+
+                    <StyledButton 
+                      type="submit"
+                      disabled={expenseLoading}
+                    >
+                      {expenseLoading ? <CircularProgress size={24} /> : "Add Expense"}
+                    </StyledButton>
+                  </form>
+                </div>
               </Grid>
             )}
 
             {currentSegment === 'expenses' && (
-              <Grid size={12}>
-                <div style={{ margin: '24px 0' }}>
+              <Grid item xs={12}>
+                <div style={{ padding: '16px' }}>
                   <h2>Expense History</h2>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#f5f5f5' }}>
-                        <th style={{ padding: '12px', textAlign: 'left' ,color:'black'}}>Date</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Amount</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Category</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black'}}>Payment Method</th>
-                        <th style={{ padding: '12px', textAlign: 'left',color:'black' }}>Description</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expenses.map((expense, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                          <td style={{ padding: '12px' }}>
-                            {new Date(expense.date).toLocaleDateString()}
-                          </td>
-                          <td style={{ padding: '12px' }}>₹{expense.amount}</td>
-                          <td style={{ padding: '12px' }}>{expense.categories.join(', ')}</td>
-                          <td style={{ padding: '12px' }}>{expense.paymentMethod}</td>
-                          <td style={{ padding: '12px' }}>{expense.description}</td>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5' }}>
+                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Date</th>
+                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Amount</th>
+                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Trip</th>
+                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Description</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {expenses.map((expense, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '12px' }}>
+                              {new Date(expense.date).toLocaleDateString()}
+                            </td>
+                            <td style={{ padding: '12px' }}>₹{expense.amount}</td>
+                            <td style={{ padding: '12px' }}>{expense.tripName}</td>
+                            <td style={{ padding: '12px' }}>{expense.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </Grid>
             )}
@@ -582,17 +558,4 @@ export default function DashboardLayoutBasic(props) {
     </AppProvider>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

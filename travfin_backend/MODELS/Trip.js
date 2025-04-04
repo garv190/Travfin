@@ -1,0 +1,12 @@
+// MODELS/Trip.js
+const mongoose = require('mongoose');
+
+const tripSchema = new mongoose.Schema({
+    name: String,
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: 'mongosu' },
+    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'mongosu' }],
+    transactions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' }],
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Trip', tripSchema);

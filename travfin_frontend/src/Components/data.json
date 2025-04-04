@@ -1,6 +1,6 @@
 {
     "categories": [
-      { "value": "", "label": "" }
+      { "value": "" }
      
     ],
     "paymentMethods": [
@@ -21,6 +21,23 @@
         "description": ""
       }
     ],
+
+    "email": [
+      {
+        "email": "",
+        "description": ""
+      
+      }
+     
+    ],
+
+
+
+
+
+
+
+
     "expenses": [
       {
         "amount": "",

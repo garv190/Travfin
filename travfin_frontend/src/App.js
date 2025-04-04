@@ -7,6 +7,7 @@ import Signup from "./Components/signup"
 import Signin from "./Components/signin"
 import OTPVerification from "./Components/OTPVerification"
 import Passwordverification from "./Components/forgot_password"
+import JoinTripPage from './Components/JoinTripPage';
 
 // import { useState,useEffect } from 'react';
 // import Footer from "./Components/footer"
@@ -107,6 +108,8 @@ function App() {
      <Route path="/forgotpassword" element={<Passwordverification/>}></Route>
 
      <Route path="/profile" element={<Drawer/>}></Route>
+     
+     <Route path="/join-trip/:tripId" element={<JoinTripPage />} />
 
      
 
