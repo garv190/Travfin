@@ -302,65 +302,60 @@ app.post('/trips/:tripId/join', async (req, res) => {
 });
 
 
-
-
-
-
-
 app.get('/trips/:tripId', authenticateToken, async (req, res) => {
-    try {
-        const trip = await Trip.findById(req.params.tripId)
-            .populate('creator', 'name email')
-            .populate('participants', 'name email')
-            .populate({
-                path: 'transactions',
-                populate: [
-                    { path: 'payer', select: 'name email' },
-                    { path: 'shares.user', select: 'name email' }
-                ]
-            });
+  try {
+      const trip = await Trip.findById(req.params.tripId)
+          .populate('creator', 'name email')
+          .populate('participants', 'name email')
+          .populate({
+              path: 'transactions',
+              options: { sort: { createdAt: -1 } }, // Newest first
+              populate: [
+                { 
+                  path: 'payer',
+                  model: 'mongosu', // Make sure this is your actual User model name
+                  select: 'name email'
+                },
+                { 
+                  path: 'shares.user',
+                  model: 'mongosu', // Make sure this is your actual User model name
+                  select: 'name email'
+                }
+              ]
+          });
 
-        if (!trip.participants.some(p => p._id.equals(req.user.id))) {
-            return res.status(403).json({ success: false, message: 'Not authorized for this trip' });
-        }
+      if (!trip) {
+          return res.status(404).json({ success: false, message: 'Trip not found' });
+      }
 
-        const balanceSheet = calculateBalances(trip.transactions);
-        res.json({ success: true, trip, balanceSheet });
+      if (!trip.participants.some(p => p._id.toString() === req.user.id)) {
+          return res.status(403).json({ success: false, message: 'Not authorized for this trip' });
+      }
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
+      // Get detailed balance information for each participant
+      const participantBalances = {};
+      
+      trip.participants.forEach(participant => {
+          // Calculate balances for each participant
+          const balanceSheet = calculateBalances(trip.transactions, participant._id);
+          participantBalances[participant._id.toString()] = balanceSheet;
+      });
+
+      // Get the balance sheet for the current user
+      const userBalanceSheet = calculateBalances(trip.transactions, req.user.id);
+
+      res.json({ 
+          success: true, 
+          trip, 
+          userBalanceSheet,
+          participantBalances
+      });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
 });
-
-
-
-
-// app.post('/transactions', authenticateToken, async (req, res) => {
-//     try {
-//         const { tripId, amount, description, shares } = req.body;
-
-//         const transaction = await Transaction.create({
-//             trip: tripId,
-//             amount,
-//             description,
-//             payer: req.user.id,
-//             shares: Object.entries(shares).map(([userId, amount]) => ({
-//                 user: userId,
-//                 amount
-//             }))
-//         });
-
-//         await Trip.findByIdAndUpdate(tripId, { $push: { transactions: transaction._id } });
-
-//         res.status(201).json({ success: true, transaction });
-
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ success: false, message: 'Server error' });
-//     }
-// });
-
 
 
 
@@ -371,6 +366,25 @@ app.post('/transactions', authenticateToken, async (req, res) => {
   try {
       const { tripId, amount, description, shares } = req.body;
 
+      const trip = await Trip.findById(tripId);
+      if (!trip) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Trip not found" 
+        });
+      }
+  
+      // Authorization check - only check if user is a participant
+      if (!trip.participants.includes(req.user.id)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Only trip participants can add transactions" 
+        });
+      }
+      
+      // Remove the trip creator restriction for first transaction
+      // This allows any participant to add transactions
+
       // Convert shares to numbers and validate
       const shareEntries = Object.entries(shares).map(([userId, amount]) => ({
           user: userId,
@@ -380,7 +394,7 @@ app.post('/transactions', authenticateToken, async (req, res) => {
       // Calculate total shares
       const totalShares = shareEntries.reduce((sum, share) => sum + share.amount, 0);
       
-      if (totalShares !== Number(amount)) {
+      if (Math.abs(totalShares - Number(amount)) > 0.01) { // Allow small floating point differences
           return res.status(400).json({
               success: false,
               message: `Sum of shares (${totalShares}) does not match transaction amount (${amount})`
@@ -397,13 +411,18 @@ app.post('/transactions', authenticateToken, async (req, res) => {
 
       await Trip.findByIdAndUpdate(tripId, { $push: { transactions: transaction._id } });
 
-      res.status(201).json({ success: true, transaction });
+      // Return populated transaction for better client-side handling
+      const populatedTransaction = await Transaction.findById(transaction._id)
+        .populate('payer', 'name email')
+        .populate('shares.user', 'name email');
+
+      res.status(201).json({ success: true, transaction: populatedTransaction });
 
   } catch (error) {
       console.error(error);
       res.status(500).json({ 
           success: false, 
-          message: error.message // Now shows the validation error clearly
+          message: error.message
       });
   }
 });
@@ -414,7 +433,216 @@ app.post('/transactions', authenticateToken, async (req, res) => {
 
 
 
+app.get('/transactions', authenticateToken, async (req, res) => {
+  try {
+    const { tripId } = req.query;
+    
+    if (!tripId) {
+      return res.status(400).json({
+        success: false,
+        message: "Trip ID is required"
+      });
+    }
 
+
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(tripId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Trip ID format"
+      });
+    }
+
+
+
+
+    // Find trip to verify user is a participant
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found"
+      });
+    }
+
+
+
+
+    if (!trip.participants.includes(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view this trip"
+      });
+    }
+
+    // Fetch transactions for this trip
+    const transactions = await Transaction.find({ trip: tripId })
+      .populate('payer', 'name email')
+      .populate('shares.user', 'name email')
+      .sort({ createdAt: -1 });
+
+    // Get total owed and owned amounts for the current user in this trip
+    const userTransactions = {
+      youOwe: [],
+      youAreOwed: []
+    };
+
+    transactions.forEach(transaction => {
+      const payerId = transaction.payer._id.toString();
+      const isCurrentUserPayer = payerId === req.user.id;
+      
+      // Process each share in the transaction
+      transaction.shares.forEach(share => {
+        const shareUserId = share.user._id.toString();
+        
+        if (isCurrentUserPayer && shareUserId !== req.user.id) {
+          // Current user paid, so they are owed by others
+          userTransactions.youAreOwed.push({
+            transactionId: transaction._id,
+            description: transaction.description,
+            date: transaction.createdAt,
+            userOwed: share.user,
+            amount: share.amount,
+            status: 'pending' // You might want to add a status field to your model
+          });
+        } else if (!isCurrentUserPayer && shareUserId === req.user.id) {
+          // Current user didn't pay, but has a share, so they owe the payer
+          userTransactions.youOwe.push({
+            transactionId: transaction._id,
+            description: transaction.description,
+            date: transaction.createdAt,
+            userToPayBack: transaction.payer,
+            amount: share.amount,
+            status: 'pending'
+          });
+        }
+      });
+    });
+
+    res.json({
+      success: true,
+      transactions,
+      userTransactions
+    });
+    
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    let message = 'Error fetching transactions';
+    
+    if (error.name === 'CastError') {
+      message = `Invalid ID format: ${error.value}`;
+    }
+    
+    res.status(500).json({
+      success: false,
+      message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+
+
+
+app.post('/payments', authenticateToken, async (req, res) => {
+  try {
+    const { transactionId, amount } = req.body;
+    
+    if (!transactionId || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction ID and amount are required"
+      });
+    }
+
+    // In a real app, you would process the payment here
+    // and update the transaction status
+
+    // For now, just return a success response
+    res.json({
+      success: true,
+      message: "Payment processed successfully"
+    });
+    
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing payment'
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+// Add this route to get user balances
+app.get('/user/balances', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get all trips the user is part of
+    const userTrips = await Trip.find({ participants: userId }).select('_id');
+    const tripIds = userTrips.map(trip => trip._id);
+
+    // Find all relevant transactions
+    const transactions = await Transaction.find({
+      trip: { $in: tripIds },
+      $or: [
+        { payer: userId },
+        { 'shares.user': userId }
+      ]
+    }).populate('shares.user', '_id');
+
+    let totalOwed = 0;  // User owes others
+    let totalOwned = 0; // Others owe user
+
+    transactions.forEach(transaction => {
+      // Convert payer to string for comparison
+      const payerId = transaction.payer.toString();
+      
+      if (payerId === userId) {
+        // User is the payer - sum all shares except self
+        transaction.shares.forEach(share => {
+          if (share.user._id.toString() !== userId) {
+            totalOwned += share.amount;
+          }
+        });
+      } else {
+        // User is in shares - find their share amount
+        const userShare = transaction.shares.find(share => 
+          share.user._id.toString() === userId
+        );
+        if (userShare) totalOwed += userShare.amount;
+      }
+    });
+
+    const netBalance = totalOwned - totalOwed;
+
+    res.json({
+      success: true,
+      balances: {
+        youOwe: parseFloat(totalOwed.toFixed(2)),
+        youAreOwed: parseFloat(totalOwned.toFixed(2)),
+        netBalance: parseFloat(netBalance.toFixed(2))
+      }
+    });
+
+  } catch (error) {
+    console.error('Balance calculation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error calculating balances' 
+    });
+  }
+});
 
 app.get('/user/trips', authenticateToken, async (req, res) => {
   try {
@@ -427,14 +655,6 @@ app.get('/user/trips', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
-
-
-
-
-
-
-// Helper functions (retained and updated)
 function authenticateToken(req, res, next) {
     const token = req.cookies?.accesstoken;
     if (!token) return res.status(401).json({ message: "Unauthorized", success: false });
@@ -474,16 +694,117 @@ const sendTripInvitations = async (trip, creator, participants) => {
   }
 };
 
-function calculateBalances(transactions) {
-    return transactions.reduce((acc, transaction) => {
-        transaction.shares.forEach(share => {
-            if (!share.user.equals(transaction.payer._id)) {
-                acc[share.user] = (acc[share.user] || 0) + share.amount;
-                acc[transaction.payer._id] = (acc[transaction.payer._id] || 0) - share.amount;
-            }
-        });
-        return acc;
-    }, {});
+
+function calculateBalances(transactions, currentUserId) {
+  const balanceSheet = {};
+
+  if (!transactions || !Array.isArray(transactions)) {
+    console.error('Invalid transactions data:', transactions);
+    return {
+      individual: [],
+      totalOwed: 0,
+      totalOwned: 0,
+      netResult: 0
+    };
+  }
+
+  transactions.forEach(transaction => {
+    try {
+      // Safely get payer ID
+      const payerId = transaction.payer?._id?.toString() || transaction.payer?.toString();
+      
+      if (!payerId) {
+        console.error('Invalid transaction - missing payer:', transaction);
+        return;
+      }
+
+      if (!transaction.shares || !Array.isArray(transaction.shares)) {
+        console.error('Invalid transaction - missing shares array:', transaction);
+        return;
+      }
+
+      transaction.shares.forEach(share => {
+        try {
+          // Safely get share user ID
+          const shareUserId = share.user?._id?.toString() || share.user?.toString();
+
+          if (!shareUserId) {
+            console.error('Invalid share - missing user:', share);
+            return;
+          }
+
+          const shareAmount = Number(share.amount) || 0;
+
+          if (shareUserId !== payerId) {
+            // The user who's part of the share owes the payer
+            balanceSheet[shareUserId] = (balanceSheet[shareUserId] || 0) - shareAmount;
+            // The payer is owed by the user who's part of the share
+            balanceSheet[payerId] = (balanceSheet[payerId] || 0) + shareAmount;
+          }
+        } catch (shareError) {
+          console.error('Error processing share:', share, shareError);
+        }
+      });
+    } catch (transactionError) {
+      console.error('Error processing transaction:', transaction, transactionError);
+    }
+  });
+
+  // Format the result
+  const result = {
+    individual: [],
+    totalOwed: 0,
+    totalOwned: 0,
+    netResult: 0
+  };
+
+  // Format individual balances and convert currentUserId to string for comparison
+  const currentUserIdStr = currentUserId?.toString();
+
+  Object.entries(balanceSheet).forEach(([userId, balance]) => {
+    if (userId === currentUserIdStr) return;
+
+    // Find user details safely - first look in payers, then in shares
+    let userName = 'Unknown';
+    let userFound = false;
+
+    for (const t of transactions) {
+      // Check if this user is a payer in any transaction
+      if ((t.payer?._id?.toString() === userId || t.payer?.toString() === userId) && t.payer?.name) {
+        userName = t.payer.name;
+        userFound = true;
+        break;
+      }
+      
+      // Check if this user is in shares in any transaction
+      if (t.shares && Array.isArray(t.shares)) {
+        for (const s of t.shares) {
+          if ((s.user?._id?.toString() === userId || s.user?.toString() === userId) && s.user?.name) {
+            userName = s.user.name;
+            userFound = true;
+            break;
+          }
+        }
+        if (userFound) break;
+      }
+    }
+
+    const owed = Math.max(0, -balance);
+    const owned = Math.max(0, balance);
+
+    result.individual.push({
+      userId,
+      name: userName,
+      owed: parseFloat(owed.toFixed(2)),
+      owned: parseFloat(owned.toFixed(2))
+    });
+  });
+
+  result.totalOwed = parseFloat(result.individual.reduce((sum, b) => sum + b.owed, 0).toFixed(2));
+  result.totalOwned = parseFloat(result.individual.reduce((sum, b) => sum + b.owned, 0).toFixed(2));
+  result.netResult = parseFloat((result.totalOwned - result.totalOwed).toFixed(2));
+
+  return result;
 }
 
 // Existing routes (retained from your code)

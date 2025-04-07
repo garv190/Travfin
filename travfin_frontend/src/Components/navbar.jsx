@@ -15,7 +15,7 @@ import AdbIcon from '@mui/icons-material/Adb';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-const pages = ['Products', 'Pricing', 'Blog'];
+const pages = ['Chatbot', 'Conversation', 'Travel Guide'];
 const settings = [
   { value: 'Profile', url: '/profile' },
   { value: 'Sign Up', url: '/signup' },

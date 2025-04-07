@@ -12,6 +12,13 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+// import { 
+//   Paper, 
+//   Button, 
+
+// } from '@material-ui/core';
+
+
 
 
 
@@ -119,7 +126,7 @@ const StyledButton = styled('button')(({ theme }) => ({
 
 export default function DashboardLayoutBasic(props) {
   
-const [dynamicNavigation, setDynamicNavigation] = useState([]);
+const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   const { window } = props;
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: "", email: "" });
@@ -142,9 +149,108 @@ const [dynamicNavigation, setDynamicNavigation] = useState([]);
   const [expenseLoading, setExpenseLoading] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [shares, setShares] = useState({});
+  const [balanceData, setBalanceData] = useState({
+    totalOwned: 0,
+    totalOwed: 0,
+    netResult: 0
+  });
 
 
+  const [tripTransactions, setTripTransactions] = useState([]);
+  const [userTransactions, setUserTransactions] = useState({ youOwe: [], youAreOwed: [] });
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+
+  
+
+
+  const handlePayment = async (transactionId, amount) => {
+    setPaymentLoading(true);
+    setSelectedTransactionId(transactionId);
+    
+    try {
+      console.log(`Processing payment for transaction: ${transactionId}, amount: ${amount}`);
+      
+      const response = await fetch("http://localhost:3500/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          transactionId,
+          amount
+        }),
+      });
+  
+      const data = await response.json();
+      console.log("Payment response:", data);
+      
+      if (!response.ok) throw new Error(data.message || "Failed to process payment");
+  
+      // Show success message
+      setSuccess("Payment processed successfully!");
+      
+      // Immediately refresh the relevant data
+      if (currentSegment.startsWith('expenses/')) {
+        const tripId = currentSegment.split('/')[1];
+        setTimeout(() => fetchTripTransactions(tripId), 500); // Small delay to allow backend to update
+      }
+      
+      // Also refresh balances
+      setTimeout(() => fetchBalances(), 800);
+      
+    } catch (error) {
+      console.error("Payment error:", error);
+      setError(error.message || "Payment failed. Please try again.");
+    } finally {
+      setPaymentLoading(false);
+      setSelectedTransactionId(null);
+    }
+  };
+
+
+ // Update your fetchTripTransactions function to properly handle the data
+ const fetchTripTransactions = async (tripId) => {
+  try {
+    console.log("Fetching transactions for trip:", tripId);
+    const response = await fetch(`http://localhost:3500/transactions?tripId=${tripId}`, {
+      credentials: "include",
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log("Transaction data received:", data);
+    
+    if (data.success) {
+      // Set all transactions
+      setTripTransactions(data.transactions || []);
+      
+      // Make sure userTransactions has proper structure even if backend doesn't provide it
+      const userTrans = data.userTransactions || { youOwe: [], youAreOwed: [] };
+      setUserTransactions(userTrans);
+      
+      console.log("User transactions:", userTrans);
+    } else {
+      throw new Error(data.message || "Failed to load transactions");
+    }
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    setError(`Failed to load trip transactions: ${error.message}`);
+  }
+};
+  
+
+
+
+  // Replace both of your navigation useEffect hooks with this single implementation
   useEffect(() => {
+    // Only run this when the trips array changes
+    if (!Array.isArray(trips) || trips.length === 0) return;
+    
+    console.log("Building navigation with trips:", trips);
+    
     const baseNav = [
       {
         kind: 'header',
@@ -153,17 +259,35 @@ const [dynamicNavigation, setDynamicNavigation] = useState([]);
       {
         segment: 'dashboard',
         title: 'Credit/Debit',
-        // ... (rest of dashboard config)
+        content: {
+          heading: "Welcome to Credit/Debit Dashboard",
+          message: "Manage your financial transactions here.",
+          description: "Track all your credits and debits in one place."
+        },
+        url: 'credit/debit',
+        icon: <DashboardIcon />,
       },
       {
         segment: 'recipient',
         title: 'Create Trip',
-        // ... (rest of recipient config)
+        content: {
+          heading: "Welcome to Add Recipient Dashboard",
+          message: "Manage your financial transactions here.",
+          description: "Track all your credits and debits in one place."
+        },
+        url: 'ar',
+        icon: <SendIcon />,
       },
       {
         segment: 'orders',
         title: 'Add Expense',
-        // ... (rest of orders config)
+        content: {
+          heading: "Expense Management",
+          message: "Add and categorize your expenses.",
+          description: "Keep track of where your money goes."
+        },
+        url: 'orders',
+        icon: <ShoppingCartIcon />,
       },
       {
         kind: 'divider',
@@ -182,28 +306,113 @@ const [dynamicNavigation, setDynamicNavigation] = useState([]);
         },
         url: 'expenses',
         icon: <BarChartIcon />,
-        children: trips.map(trip => ({
+        // Create children array with explicit indices for each trip
+        children: trips.map((trip, index) => ({
           segment: `expenses/${trip._id}`,
           title: trip.name,
           url: `expenses/${trip._id}`,
+          tripId: trip._id,
+          // Adding a numeric index to ensure proper ordering
+          order: index
         }))
       }
     ];
     
+    console.log("Setting navigation with children:", baseNav[6].children);
     setDynamicNavigation(baseNav);
-  }, [trips]); // Rebuild navigation when trips change
+  }, [trips]);
+
+  useEffect(() => {
+    const updatedNavigation = NAVIGATION.map(item => {
+      if (item.segment === 'expenses') {
+        return {
+          ...item,
+          children: trips.map(trip => ({
+            segment: `expenses/${trip._id}`,
+            title: trip.name,
+            url: `expenses/${trip._id}`,
+          }))
+        };
+      }
+      return item;
+    });
+    
+    setDynamicNavigation(updatedNavigation);
+  }, [trips]);
+
+
+
+
+
+
+// Update the segment change effect
+useEffect(() => {
+  if (currentSegment.startsWith('expenses/')) {
+    const tripId = currentSegment.split('/')[1];
+    console.log("Loading trip data for ID:", tripId); // Add this for debugging
+    fetchTripTransactions(tripId);
+  }
+}, [currentSegment]);
+
+
+
+
+
+
+
+
+
+  // const router = {
+  //   pathname: `/${currentSegment}`,
+  //   searchParams: new URLSearchParams(),
+  //   navigate: (path) => setCurrentSegment(path.split('/').pop()),
+  // };
+
+
+
+  const router = {
+    pathname: `/${currentSegment}`,
+    searchParams: new URLSearchParams(),
+    navigate: (path) => {
+      console.log("Navigating to:", path);
+      // Extract segment from path properly
+      const newSegment = path.startsWith('/') ? path.substring(1) : path;
+      setCurrentSegment(newSegment);
+    },
+  };
+
+
+
+
+
+
+
+// Update expense fetching
+useEffect(() => {
+  const fetchExpenses = async (tripId) => {
+    try {
+      const response = await fetch(`http://localhost:3500/transactions?tripId=${tripId}`, {
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (data.success) setExpenses(data.transactions);
+    } catch (error) {
+      setError("Failed to load expenses");
+    }
+  };
+
+  if (currentSegment.startsWith('expenses/')) {
+    const tripId = currentSegment.split('/')[1];
+    fetchExpenses(tripId);
+  }
+}, [currentSegment]);
+
+
+
+
+
 
   
-
-
-
-
-
-
-
-
-
-
 
 // Add this useEffect to load participants when trip is selected
 useEffect(() => {
@@ -252,6 +461,7 @@ useEffect(() => {
         if (data.success) {
           setUser({ name: data.user1, email: data.detail1 });
           fetchTrips();
+          fetchBalances(); // Add this line
         }
       } catch (error) {
         setError("Failed to load user data");
@@ -271,10 +481,37 @@ useEffect(() => {
       });
       const data = await response.json();
       if (data.success) setTrips(data.trips);
+      fetchBalances(); // Refresh balances after any trip update
+
+
+
     } catch (error) {
       setError("Failed to load trips");
     }
   };
+
+
+  const fetchBalances = async () => {
+    try {
+      const response = await fetch("http://localhost:3500/user/balances", {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (data.success) {
+        setBalanceData({
+          youOwe: data.balances.youOwe || 0,
+          youAreOwed: data.balances.youAreOwed || 0,
+          netBalance: data.balances.netBalance || 0
+        });
+      }
+    } catch (error) {
+      setError("Failed to load balance data");
+    }
+  };
+
+
+
   
 
   const handleCreateTrip = async () => {
@@ -302,6 +539,8 @@ useEffect(() => {
       setTripName('');
       setParticipantEmails('');
       fetchTrips();
+      fetchBalances(); // Add this line
+
     } catch (error) {
       setError(error.message);
     } finally {
@@ -339,6 +578,7 @@ useEffect(() => {
       setDescription('');
       setSelectedTrip('');
       fetchTrips();
+      fetchBalances(); // Add this line
     } catch (error) {
       setError(error.message);
     } finally {
@@ -346,24 +586,6 @@ useEffect(() => {
     }
   };
 
-  // useEffect(() => {
-  //   if (selectedTrip) {
-  //     fetch(`http://localhost:3500/trips/${selectedTrip}`, {
-  //       credentials: "include"
-  //     })
-  //       .then(res => res.json())
-  //       .then(data => {
-  //         if (data.success) {
-  //           setParticipants(data.trip.participants);
-  //           const initialShares = {};
-  //           data.trip.participants.forEach(p => {
-  //             initialShares[p._id] = 0;
-  //           });
-  //           setShares(initialShares);
-  //         }
-  //       });
-  //   }
-  // }, [selectedTrip]);
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -373,12 +595,8 @@ useEffect(() => {
 
   return (
     <AppProvider 
-      navigation={NAVIGATION} 
-      router={{
-        pathname: `/${currentSegment}`,
-        searchParams: new URLSearchParams(),
-        navigate: (path) => setCurrentSegment(path.split('/').pop()),
-      }}
+      navigation={dynamicNavigation} 
+      router={router}
       theme={demoTheme} 
       window={window}  
       title={"TravFin"}
@@ -400,14 +618,18 @@ useEffect(() => {
               <Grid item xs={12}>
                 <div style={{ display: 'flex', gap: '32px', margin: '24px 0'}}>
                   <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', flex: 1 }}>
-                    <h3 style={{ margin: 0, color: '#2e7d32' }}>Total Owned</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000' }}>₹0.00</p>
+                    <h3 style={{ margin: 0, color: '#d32f2f' }}>Owed</h3>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000' }}>₹{(balanceData?.youOwe || 0).toFixed(2)}</p>
                   </div>
                   <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', flex: 1 }}>
-                    <h3 style={{ margin: 0, color: '#d32f2f' }}>Total Owed</h3>
-                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000'}}>₹0.00</p>
+                    <h3 style={{ margin: 0, color: '#2e7d32' }}>Owned</h3>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000'}}>₹{(balanceData?.youAreOwed || 0).toFixed(2)}</p>
                   </div>
-                </div>
+                  <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', flex: 1 }}>
+                    <h3 style={{ margin: 0, color: '#0000FF' }}>Net {(balanceData?.netBalance || 0) >= 0 ? 'Owed' : 'Owned'}</h3>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000'}}>₹{Math.abs(balanceData?.netBalance || 0).toFixed(2)}</p>
+                  </div>
+                  </div>
 
                 <div style={{ margin: '24px 0' }}>
                   <h3>Your Trips</h3>
@@ -521,37 +743,214 @@ useEffect(() => {
               </Grid>
             )}
 
-            {currentSegment === 'expenses' && (
-              <Grid item xs={12}>
-                <div style={{ padding: '16px' }}>
-                  <h2>Expense History</h2>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5' }}>
-                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Date</th>
-                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Amount</th>
-                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Trip</th>
-                          <th style={{ padding: '12px', textAlign: 'left',color:'#000000' }}>Description</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {expenses.map((expense, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '12px' }}>
-                              {new Date(expense.date).toLocaleDateString()}
-                            </td>
-                            <td style={{ padding: '12px' }}>₹{expense.amount}</td>
-                            <td style={{ padding: '12px' }}>{expense.tripName}</td>
-                            <td style={{ padding: '12px' }}>{expense.description}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+
+
+
+
+
+
+
+
+
+
+{(currentSegment === 'expenses' || currentSegment.startsWith('expenses/')) && (
+  <Grid item xs={12}>
+    <div style={{ padding: '16px' }}>
+      {currentSegment.startsWith('expenses/') ? (
+        <>
+          <h2>Expenses for {
+            trips.find(t => t._id === currentSegment.split('/')[1])?.name || "Selected Trip"
+          }</h2>
+          
+          {/* Transaction Summary - Revamped with point-by-point display */}
+          {/* <Paper elevation={2} style={{ padding: '24px', marginBottom: '24px', borderRadius: '8px' }}> */}
+          <div>
+            <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Transaction Summary</h3>
+            
+            {/* You Owe Section */}
+            <div style={{ marginBottom: '32px' }}>
+              <h4 style={{ 
+                color: '#d32f2f', 
+                backgroundColor: '#ffebee', 
+                padding: '10px 16px', 
+                borderRadius: '4px',
+                marginBottom: '16px'
+              }}>You Owe</h4>
+              
+              {userTransactions.youOwe && userTransactions.youOwe.length > 0 ? (
+                userTransactions.youOwe.map((transaction, index) => (
+                  <div key={index} style={{ 
+                    padding: '16px', 
+                    marginBottom: '12px', 
+                    backgroundColor: '#f8f8f8',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                        You owe <strong style={{ color: '#d32f2f' }}>₹{transaction.amount.toFixed(2)}</strong> to <strong>{transaction.userToPayBack.name}</strong>
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#666' }}>
+                        <span style={{ fontStyle: 'italic' }}>{transaction.description}</span> • {new Date(transaction.date).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <StyledButton
+                      variant="contained" 
+                      color="primary"
+                      size="medium"
+                      style={{ 
+                        backgroundColor: '#1976d2', 
+                        color: 'white',
+                        minWidth: '80px'
+                      }}
+                      disabled={paymentLoading && selectedTransactionId === transaction.transactionId}
+                      onClick={() => handlePayment(transaction.transactionId, transaction.amount)}
+                    >
+                      {paymentLoading && selectedTransactionId === transaction.transactionId ? 
+                        <CircularProgress size={20} color="inherit" /> : "Pay Now"}
+                    </StyledButton>
                   </div>
+                ))
+              ) : (
+                <div style={{ 
+                  padding: '16px', 
+                  backgroundColor: '#f8f8f8', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  color: '#666'
+                }}>
+                  You don't owe anyone in this trip.
                 </div>
-              </Grid>
+              )}
+            </div>
+            
+            {/* You Are Owed Section */}
+            <div>
+              <h4 style={{ 
+                color: '#2e7d32', 
+                backgroundColor: '#e8f5e9', 
+                padding: '10px 16px', 
+                borderRadius: '4px',
+                marginBottom: '16px'
+              }}>You Are Owed</h4>
+              
+              {userTransactions.youAreOwed && userTransactions.youAreOwed.length > 0 ? (
+                userTransactions.youAreOwed.map((transaction, index) => (
+                  <div key={index} style={{ 
+                    padding: '16px', 
+                    marginBottom: '12px', 
+                    backgroundColor: '#f8f8f8',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  }}>
+                    <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                      <strong>{transaction.userOwed.name}</strong> owes you <strong style={{ color: '#2e7d32' }}>₹{transaction.amount.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      <span style={{ fontStyle: 'italic' }}>{transaction.description}</span> • {new Date(transaction.date).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ 
+                  padding: '16px', 
+                  backgroundColor: '#f8f8f8', 
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  color: '#666'
+                }}>
+                  No one owes you in this trip.
+                </div>
+              )}
+            </div>
+          {/* </Paper> */}
+          </div>
+          
+          {/* All Transactions Section - Simplified List */}
+          {/* <Paper elevation={2} style={{ padding: '24px', borderRadius: '8px' }}> */}
+
+          <div>
+            <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' }}>All Transactions</h3>
+            
+            {tripTransactions && tripTransactions.length > 0 ? (
+              <div>
+                {tripTransactions.map((transaction, idx) => (
+                  <div key={idx} style={{ 
+                    padding: '16px', 
+                    marginBottom: '12px', 
+                    backgroundColor: '#f8f8f8',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: 'bold' }}>{transaction.description}</span>
+                      <span>₹{transaction.amount.toFixed(2)}</span>
+                    </div>
+                    
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      Paid by <strong>{transaction.payer.name}</strong> • {new Date(transaction.createdAt).toLocaleDateString()}
+                    </div>
+                    
+                    <div style={{ fontSize: '14px' }}>
+                      <strong>Split:</strong>
+                      <div style={{ marginTop: '4px', paddingLeft: '8px' }}>
+                        {transaction.shares.map((share, shareIdx) => (
+                          <div key={shareIdx} style={{ 
+                            padding: '6px 10px',
+                            marginBottom: '4px', 
+                            backgroundColor: share.user._id === user._id ? '#e3f2fd' : '#fff',
+                            borderRadius: '4px',
+                            border: '1px solid #e0e0e0'
+                          }}>
+                            {share.user.name === user.name ? 'You' : share.user.name}: ₹{share.amount.toFixed(2)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ 
+                padding: '16px', 
+                backgroundColor: '#f8f8f8', 
+                borderRadius: '8px',
+                textAlign: 'center',
+                color: '#666'
+              }}>
+                No transactions in this trip yet.
+              </div>
             )}
+          {/* </Paper> */}
+          </div>
+        </>
+      ) : (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          backgroundColor: '#f8f8f8',
+          borderRadius: '8px'
+        }}>
+          <h3 style={{ color: '#666' }}>Select a trip from the sidebar to view expenses</h3>
+          <p>Your trips will appear under "Your Expenses" in the sidebar</p>
+        </div>
+      )}
+    </div>
+  </Grid>
+)}
+
+
+
+
+
+
+
+
+
+
           </Grid>
         </PageContainer>
       </DashboardLayout>
