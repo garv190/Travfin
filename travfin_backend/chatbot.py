@@ -21,11 +21,7 @@ class PlannerState(TypedDict):
     trip_dates: TripDates
 
     from langchain_groq import ChatGroq
-llm = ChatGroq(
-    temperature = 0,
-    groq_api_key = "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",
-    model_name = "llama-3.3-70b-versatile"
-)
+
 
 result=llm.invoke("What is FR car")
 result.content
