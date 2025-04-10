@@ -169,51 +169,45 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
     setSelectedTransactionId(transactionId);
     
     try {
-      console.log(`Processing payment for transaction: ${transactionId}, amount: ${amount}`);
-      
       const response = await fetch("http://localhost:3500/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          transactionId,
-          amount
-        }),
+        body: JSON.stringify({ transactionId, amount }),
       });
-  
-      const data = await response.json();
-      console.log("Payment response:", data);
       
-      if (!response.ok) throw new Error(data.message || "Failed to process payment");
-  
-      // Show success message
-      setSuccess("Payment processed successfully!");
-      
-      // Immediately refresh the relevant data
-      if (currentSegment.startsWith('expenses/')) {
-        const tripId = currentSegment.split('/')[1];
-        setTimeout(() => fetchTripTransactions(tripId), 500); // Small delay to allow backend to update
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
-      // Also refresh balances
-      setTimeout(() => fetchBalances(), 800);
-      
+      const data = await response.json();
+      if (data.success) {
+        setSuccess("Payment processed successfully!");
+        // Refresh trip transactions
+        if (currentSegment.startsWith('expenses/')) {
+          const tripId = currentSegment.split('/')[1];
+          fetchTripTransactions(tripId);
+        }
+        fetchBalances(); // Update balances after payment
+      }
     } catch (error) {
-      console.error("Payment error:", error);
-      setError(error.message || "Payment failed. Please try again.");
+      setError(`Payment failed: ${error.message}`);
     } finally {
       setPaymentLoading(false);
       setSelectedTransactionId(null);
     }
   };
 
-
  // Update your fetchTripTransactions function to properly handle the data
  const fetchTripTransactions = async (tripId) => {
   try {
     console.log("Fetching transactions for trip:", tripId);
     const response = await fetch(`http://localhost:3500/transactions?tripId=${tripId}`, {
+      method: 'GET',
       credentials: "include",
+      headers: {
+        'Content-Type': 'application/json',
+        } 
     });
     
     if (!response.ok) {
@@ -325,18 +319,23 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   useEffect(() => {
     const updatedNavigation = NAVIGATION.map(item => {
       if (item.segment === 'expenses') {
+        console.log("Building expenses navigation with trips:", trips);
         return {
           ...item,
-          children: trips.map(trip => ({
-            segment: `expenses/${trip._id}`,
-            title: trip.name,
-            url: `expenses/${trip._id}`,
-          }))
+          children: trips.map(trip => {
+            console.log("Trip for nav:", trip);
+            return {
+              segment: `expenses/${trip._id}`,
+              title: trip.name,
+              url: `expenses/${trip._id}`,
+            };
+          })
         };
       }
       return item;
     });
     
+    console.log("Updated navigation:", updatedNavigation);
     setDynamicNavigation(updatedNavigation);
   }, [trips]);
 
@@ -344,17 +343,25 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
 
 
 
-
-// Update the segment change effect
-useEffect(() => {
-  if (currentSegment.startsWith('expenses/')) {
-    const tripId = currentSegment.split('/')[1];
-    console.log("Loading trip data for ID:", tripId); // Add this for debugging
-    fetchTripTransactions(tripId);
-  }
-}, [currentSegment]);
-
-
+  useEffect(() => {
+    if (currentSegment.startsWith('expenses/')) {
+      const segments = currentSegment.split('/');
+      if (segments.length >= 2) {
+        const tripId = segments[segments.length - 1];
+        
+        // Check if the ID is valid
+        if (tripId && /^[0-9a-fA-F]{24}$/.test(tripId)) {
+          fetchTripTransactions(tripId);
+        } else {
+          console.error(`Invalid trip ID: "${tripId}"`);
+          setError(`Invalid trip ID format. Please select a valid trip.`);
+          
+          // Optional: Navigate back to main expenses view
+          // router.navigate('expenses');
+        }
+      }
+    }
+  }, [currentSegment]);
 
 
 
@@ -376,12 +383,16 @@ useEffect(() => {
     navigate: (path) => {
       console.log("Navigating to:", path);
       // Extract segment from path properly
-      const newSegment = path.startsWith('/') ? path.substring(1) : path;
+      let newSegment;
+      if (path.startsWith('/')) {
+        newSegment = path.substring(1);
+      } else {
+        newSegment = path;
+      }
+      console.log("Setting current segment to:", newSegment);
       setCurrentSegment(newSegment);
     },
   };
-
-
 
 
 
@@ -473,22 +484,60 @@ useEffect(() => {
     fetchUser();
   }, [navigate]);
 
-  const fetchTrips = async () => {
-    try {
-      const response = await fetch("http://localhost:3500/user/trips", {
-        method: "GET",
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (data.success) setTrips(data.trips);
-      fetchBalances(); // Refresh balances after any trip update
+  // const fetchTrips = async () => {
+  //   try {
+  //     const response = await fetch("http://localhost:3500/user/trips", {
+  //       method: "GET",
+  //       credentials: "include",
+  //     });
+  //     const data = await response.json();
+  //     if (data.success) setTrips(data.trips);
+  //     fetchBalances(); // Refresh balances after any trip update
 
 
 
-    } catch (error) {
-      setError("Failed to load trips");
+  //   } catch (error) {
+  //     setError("Failed to load trips");
+  //   }
+  // };
+
+
+
+const fetchTrips = async () => {
+  try {
+    console.log("Fetching trips...");
+    const response = await fetch("http://localhost:3500/user/trips", {
+      method: "GET",
+      credentials: "include",
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-  };
+    
+    const data = await response.json();
+    console.log("Fetched trips data:", data);
+    
+    if (data.success) {
+      setTrips(data.trips);
+      // Check for valid IDs
+      data.trips.forEach(trip => {
+        console.log(`Trip ${trip.name} has ID: ${trip._id}, valid format: ${/^[0-9a-fA-F]{24}$/.test(trip._id)}`);
+      });
+    }
+    
+    fetchBalances();
+  } catch (error) {
+    console.error("Error fetching trips:", error);
+    setError("Failed to load trips");
+  }
+};
+
+
+
+
+
+
 
 
   const fetchBalances = async () => {
@@ -626,7 +675,7 @@ useEffect(() => {
                     <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000'}}>₹{(balanceData?.youAreOwed || 0).toFixed(2)}</p>
                   </div>
                   <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', flex: 1 }}>
-                    <h3 style={{ margin: 0, color: '#0000FF' }}>Net {(balanceData?.netBalance || 0) >= 0 ? 'Owed' : 'Owned'}</h3>
+                    <h3 style={{ margin: 0, color: '#0000FF' }}>Net {(balanceData?.netBalance || 0) >= 0 ? 'Owned' : 'Owed'}</h3>
                     <p style={{ fontSize: '24px', fontWeight: 'bold',color: '#000000'}}>₹{Math.abs(balanceData?.netBalance || 0).toFixed(2)}</p>
                   </div>
                   </div>
@@ -790,7 +839,7 @@ useEffect(() => {
                     alignItems: 'center'
                   }}>
                     <div>
-                      <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '16px', marginBottom: '4px' ,color:'#000000'}}>
                         You owe <strong style={{ color: '#d32f2f' }}>₹{transaction.amount.toFixed(2)}</strong> to <strong>{transaction.userToPayBack.name}</strong>
                       </div>
                       <div style={{ fontSize: '14px', color: '#666' }}>
@@ -846,7 +895,7 @@ useEffect(() => {
                     borderRadius: '8px',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                   }}>
-                    <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '16px', marginBottom: '4px' , color:'#000000'}}>
                       <strong>{transaction.userOwed.name}</strong> owes you <strong style={{ color: '#2e7d32' }}>₹{transaction.amount.toFixed(2)}</strong>
                     </div>
                     <div style={{ fontSize: '14px', color: '#666' }}>
@@ -873,7 +922,7 @@ useEffect(() => {
           {/* <Paper elevation={2} style={{ padding: '24px', borderRadius: '8px' }}> */}
 
           <div>
-            <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' }}>All Transactions</h3>
+            <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px'}}>All Transactions</h3>
             
             {tripTransactions && tripTransactions.length > 0 ? (
               <div>
@@ -883,9 +932,10 @@ useEffect(() => {
                     marginBottom: '12px', 
                     backgroundColor: '#f8f8f8',
                     borderRadius: '8px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' , color:'#000000'}}>
                       <span style={{ fontWeight: 'bold' }}>{transaction.description}</span>
                       <span>₹{transaction.amount.toFixed(2)}</span>
                     </div>
@@ -894,7 +944,7 @@ useEffect(() => {
                       Paid by <strong>{transaction.payer.name}</strong> • {new Date(transaction.createdAt).toLocaleDateString()}
                     </div>
                     
-                    <div style={{ fontSize: '14px' }}>
+                    <div style={{ fontSize: '14px', color:'#000000' }}>
                       <strong>Split:</strong>
                       <div style={{ marginTop: '4px', paddingLeft: '8px' }}>
                         {transaction.shares.map((share, shareIdx) => (

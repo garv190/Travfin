@@ -33,6 +33,8 @@ const transporter = nodemailer.createTransport({
 // Existing routes (retained from your code)
 app.get('/', (req, res) => res.json({ message: "Welcome to this page" }));
 
+
+
 app.post('/signup', async (req, res, next) => {
     try {
         const { name, email, password, confirmpassword } = req.body;
@@ -444,15 +446,13 @@ app.get('/transactions', authenticateToken, async (req, res) => {
       });
     }
 
-
     const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(tripId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid Trip ID format"
+        message: `Invalid Trip ID format: "${tripId}" (length: ${tripId.length})`
       });
     }
-
 
 
 
@@ -468,12 +468,32 @@ app.get('/transactions', authenticateToken, async (req, res) => {
 
 
 
-    if (!trip.participants.includes(req.user.id)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this trip"
-      });
-    }
+    // if (!trip.participants.includes(req.user.id)) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Not authorized to view this trip"
+    //   });
+    // }
+
+
+
+
+// After (fixed)
+const isParticipant = trip.participants.some(
+  participant => participant.toString() === req.user.id
+);
+if (!isParticipant) {
+  return res.status(403).json({
+    success: false,
+    message: "Not authorized to view this trip"
+  });
+}
+
+
+
+
+
+
 
     // Fetch transactions for this trip
     const transactions = await Transaction.find({ trip: tripId })
@@ -572,16 +592,6 @@ app.post('/payments', authenticateToken, async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
-
-
-
-
 
 // Add this route to get user balances
 app.get('/user/balances', authenticateToken, async (req, res) => {
@@ -851,10 +861,6 @@ app.post('/forgotpassword', async (req, res) => {
       res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-
-
-
-
 
 app.post('/logout', (req, res) => {
     res.clearCookie("accesstoken");
