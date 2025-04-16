@@ -15,7 +15,16 @@ import AdbIcon from '@mui/icons-material/Adb';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-const pages = ['Chatbot', 'Conversation', 'Travel Guide'];
+// const pages = ['Chatbot', 'Conversation', 'Travel Guide'];
+
+
+const pages = [
+  { value: 'Chatbot', url: '/chatbot' },
+  { value: 'Conversation', url: '/conversation' },
+  { value: 'Travel Guide', url: '/travel' }
+  ];
+
+
 const settings = [
   { value: 'Profile', url: '/profile' },
   { value: 'Sign Up', url: '/signup' },
@@ -81,7 +90,7 @@ function ResponsiveAppBar() {
         method: 'POST',
         credentials: 'include'
       });
-      setUserf({ name: "", e: "" }); // Reset to "#" on logout
+      setUserf({ name: "", e: "#" }); // Reset to "#" on logout
       setUser(null);
       navigate('/signin'); // Navigate to login page after logout
     } catch (err) {
@@ -159,11 +168,19 @@ function ResponsiveAppBar() {
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button key={page} sx={{ my: 2, color: 'white', display: 'block' }}>
-                {page}
-              </Button>
-            ))}
+          {pages.map((page) => (
+  <Link
+    to={page.url}
+    key={page.value}
+    style={{ textDecoration: 'none', color: 'inherit' }}
+  >
+    <Button sx={{ my: 2, color: 'white', display: 'block' }}>
+      {page.value}
+    </Button>
+  </Link>
+))}
+
+            
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>
