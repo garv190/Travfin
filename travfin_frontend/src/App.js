@@ -8,6 +8,8 @@ import Signin from "./Components/signin"
 import OTPVerification from "./Components/OTPVerification"
 import Passwordverification from "./Components/forgot_password"
 import JoinTripPage from './Components/JoinTripPage';
+import Paymentpage from './Components/paymentpage';
+import Chat from './Components/chatbot';
 
 // import { useState,useEffect } from 'react';
 // import Footer from "./Components/footer"
@@ -107,9 +109,13 @@ function App() {
 
      <Route path="/forgotpassword" element={<Passwordverification/>}></Route>
 
+     <Route path="/paymentprofile" element={<Paymentpage/>}></Route>
+
      <Route path="/profile" element={<Drawer/>}></Route>
      
      <Route path="/join-trip/:tripId" element={<JoinTripPage />} />
+
+     <Route path="/chatbot" element={<Chat />} />
 
      
 

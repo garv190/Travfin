@@ -26,6 +26,7 @@ const transactionSchema = new mongoose.Schema({
       ref: 'mongosu',
       required: true
     },
+    email: String, // For unregistered users,
     amount: {
       type: Number,
       required: true,

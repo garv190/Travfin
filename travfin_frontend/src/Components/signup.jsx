@@ -43,6 +43,7 @@ const SignUp = () => {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
+        alert("Verify E-Mail through OTP sent to your email id ");
         navigate('/verify-otp', { state: { email: formData.email } });
       } else {
         alert(data.message);

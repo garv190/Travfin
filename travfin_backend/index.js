@@ -10,6 +10,7 @@ const TempUser = require('./MODELS/tempuser');
 const nodemailer = require('nodemailer');
 const otpGenerator = require('otp-generator');
 const Trip = require('./MODELS/Trip');
+const Invitations=require('./MODELS/Invitation');
 const Transaction = require('./MODELS/Transaction');
 const User = require('./MODELS/s'); // Assuming this is your User model
 require('./db');
@@ -154,7 +155,7 @@ app.post('/signin', async (req, res) => {
         const accesstoken = jwt.sign(
             { id: existinguser._id },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: "2h" }
+            { expiresIn: "5d" }
         );
 
         const refreshtoken = jwt.sign(
@@ -206,6 +207,7 @@ app.post('/signin', async (req, res) => {
 app.post('/trips', authenticateToken, async (req, res) => {
   try {
     const { tripName, participantEmails } = req.body;
+    
 
       // Validate input
       if (!tripName || (typeof participantEmails !== 'string' && !Array.isArray(participantEmails))) {
@@ -277,6 +279,63 @@ app.post('/trips', authenticateToken, async (req, res) => {
     });
   }
 });
+
+
+
+
+
+
+
+
+
+app.post('/helloworld', authenticateToken, async (req, res) => {
+  try {
+    const { participantEmails } = req.body;
+    // const creatorId = req.user.id;
+
+    const trafin=`http://localhost:3000/`
+
+    // Validate input
+    if (!participantEmails || typeof participantEmails !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: "Participant emails are required as a comma-separated string"
+      });
+    }
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: participantEmails,
+      subject: 'Invitation to Join TravFin',
+      text: `Dear ${participantEmails}, click on ${trafin} to join this application`
+  });
+
+  res.status(200).json({
+      success: true,
+      message: "Invitation sent to required"
+  });
+  }
+     catch (error) {
+    console.error('Invitation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -593,6 +652,79 @@ app.post('/payments', authenticateToken, async (req, res) => {
   }
 });
 
+
+
+
+app.delete('/payments', authenticateToken, async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+    
+    if (!transactionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction ID is required"
+      });
+    }
+
+    // Find the transaction and populate necessary data
+    const transaction = await Transaction.findById(transactionId)
+      .populate('payer', '_id')
+      .populate('shares.user', '_id');
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found"
+      });
+    }
+
+    // Get current user ID
+    const currentUserId = req.user.id;
+
+    // Verify user is part of the transaction
+    const isPayer = transaction.payer._id.toString() === currentUserId;
+    const isParticipant = transaction.shares.some(share => 
+      share.user._id.toString() === currentUserId
+    );
+
+    if (!isPayer && !isParticipant) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to modify this transaction"
+      });
+    }
+
+    // Delete the transaction
+    await Transaction.findByIdAndDelete(transactionId);
+
+    // Remove from trip's transactions array
+    await Trip.findByIdAndUpdate(transaction.trip, {
+      $pull: { transactions: transactionId }
+    });
+
+    res.json({
+      success: true,
+      message: "Payment recorded and transaction removed successfully"
+    });
+
+  } catch (err) {
+    console.error('Error deleting payment:', err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
 // Add this route to get user balances
 app.get('/user/balances', authenticateToken, async (req, res) => {
   try {
@@ -703,6 +835,34 @@ const sendTripInvitations = async (trip, creator, participants) => {
     console.error('Error sending invitations:', error);
   }
 };
+
+
+
+
+
+
+
+
+
+
+async function sendInvitationEmail(senderName, recipientEmail) {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: recipientEmail,
+      subject: `Join ${senderName}'s Travel Finance Group`,
+      html: `<p>You've been invited to join ${senderName}'s travel finance group!</p>
+            <p>Click here to register: <a href="${process.env.APP_URL}/register">Join Now</a></p>`
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Email send error:', error);
+    throw new Error('Failed to send invitation email');
+  }
+}
+
+
 
 
 function calculateBalances(transactions, currentUserId) {

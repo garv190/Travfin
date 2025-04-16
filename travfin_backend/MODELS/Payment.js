@@ -16,3 +16,10 @@ const PaymentSchema = new mongoose.Schema({
   });
   
   const Payment = mongoose.model('Payment', PaymentSchema);
+
+
+
+  ///sendinvitations
+  //setParticipantEmails
+  //handleCreateTrip
+  //715    "trafin704@gmail.com"

@@ -138,6 +138,7 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   // Trip Management
   const [tripName, setTripName] = useState('');
   const [participantEmails, setParticipantEmails] = useState('');
+  const [invitationEmails, setInvitationEmails] = useState('');
   const [trips, setTrips] = useState([]);
   const [tripLoading, setTripLoading] = useState(false);
 
@@ -148,6 +149,7 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   const [expenses, setExpenses] = useState([]);
   const [expenseLoading, setExpenseLoading] = useState(false);
   const [participants, setParticipants] = useState([]);
+  // const [invitationsEmails, setinvitationsEmails] = useState([]);
   const [shares, setShares] = useState({});
   const [balanceData, setBalanceData] = useState({
     totalOwned: 0,
@@ -164,13 +166,18 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   
 
 
+
+
+
+
   const handlePayment = async (transactionId, amount) => {
+    navigate('/paymentprofile')
     setPaymentLoading(true);
     setSelectedTransactionId(transactionId);
     
     try {
       const response = await fetch("http://localhost:3500/payments", {
-        method: "POST",
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ transactionId, amount }),
@@ -626,6 +633,14 @@ const fetchTrips = async () => {
       setAmount('');
       setDescription('');
       setSelectedTrip('');
+
+ // Reset shares to 0 for all participants
+  const resetShares = {};
+  participants.forEach(p => {
+    resetShares[p._id] = 0;
+  });
+  setShares(resetShares);
+  
       fetchTrips();
       fetchBalances(); // Add this line
     } catch (error) {
@@ -641,6 +656,87 @@ const fetchTrips = async () => {
       <CircularProgress />
     </div>
   );
+
+
+
+
+
+
+
+
+
+  const validateEmails = (emails) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emails
+      .split(',')
+      .map(e => e.trim())
+      .every(e => emailRegex.test(e));
+  };
+
+  
+  
+
+
+
+
+
+  const handlesendinvitation = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!invitationEmails) {
+      setError('Please enter at least one email address');
+      return;
+    }
+
+    if (!validateEmails(invitationEmails)) {
+      setError('Please enter valid email addresses');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:3500/helloworld', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+         
+        },
+        credentials: 'include', 
+        body: JSON.stringify({ participantEmails: invitationEmails })
+      });
+
+      const data = await response.json();
+
+
+      
+    
+    if (response.status === 401 || response.status === 403) {
+      localStorage.clear();
+      navigate('/login');
+      return; // Important to prevent further execution
+    }
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send invitations');
+      }
+
+      setSuccess(data.message);
+      setInvitationEmails('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+
+
+
 
   return (
     <AppProvider 
@@ -693,6 +789,19 @@ const fetchTrips = async () => {
                   ) : (
                     <p>No trips yet. Create one to get started!</p>
                   )}
+
+                   <InputField
+                    placeholder="Participant Email "
+                    value={invitationEmails} // Add fallback empty string
+                    onChange={(e) => setInvitationEmails(e.target.value)}
+                    />
+
+                  <StyledButton 
+                    onClick={handlesendinvitation}
+                    disabled={tripLoading}
+                  >
+                    {tripLoading ? <CircularProgress size={24} /> : "Send Invitation"}
+                  </StyledButton>
                 </div>
               </Grid>
             )}
@@ -772,11 +881,15 @@ const fetchTrips = async () => {
                         <InputField
                           type="number"
                           placeholder="Amount"
-                          value={shares[participant._id] || 0}
-                          onChange={(e) => setShares(prev => ({
-                            ...prev,
-                            [participant._id]: parseFloat(e.target.value) || 0
-                          }))}
+                          value={shares[participant._id]}
+                          onChange={(e) => {
+                            const value = Math.max(0, parseFloat(e.target.value) || 0);
+                            setShares(prev => ({
+                              ...prev,
+                              [participant._id]: value
+                            }))
+                          }}
+                          inputProps={{ min: "0" }}
                         />
                       </div>
                     ))}
@@ -827,7 +940,8 @@ const fetchTrips = async () => {
               }}>You Owe</h4>
               
               {userTransactions.youOwe && userTransactions.youOwe.length > 0 ? (
-                userTransactions.youOwe.map((transaction, index) => (
+                userTransactions.youOwe.filter(transaction => transaction.amount > 0)
+                .map((transaction, index) => (
                   <div key={index} style={{ 
                     padding: '16px', 
                     marginBottom: '12px', 
@@ -857,6 +971,8 @@ const fetchTrips = async () => {
                       }}
                       disabled={paymentLoading && selectedTransactionId === transaction.transactionId}
                       onClick={() => handlePayment(transaction.transactionId, transaction.amount)}
+
+                   
                     >
                       {paymentLoading && selectedTransactionId === transaction.transactionId ? 
                         <CircularProgress size={20} color="inherit" /> : "Pay Now"}
@@ -887,7 +1003,8 @@ const fetchTrips = async () => {
               }}>You Are Owed</h4>
               
               {userTransactions.youAreOwed && userTransactions.youAreOwed.length > 0 ? (
-                userTransactions.youAreOwed.map((transaction, index) => (
+               userTransactions.youAreOwed.filter(transaction => transaction.amount > 0)
+                .map((transaction, index) => (
                   <div key={index} style={{ 
                     padding: '16px', 
                     marginBottom: '12px', 
@@ -926,7 +1043,8 @@ const fetchTrips = async () => {
             
             {tripTransactions && tripTransactions.length > 0 ? (
               <div>
-                {tripTransactions.map((transaction, idx) => (
+                {tripTransactions
+                .map((transaction, idx) => (
                   <div key={idx} style={{ 
                     padding: '16px', 
                     marginBottom: '12px', 

@@ -81,7 +81,7 @@ function ResponsiveAppBar() {
         method: 'POST',
         credentials: 'include'
       });
-      setUserf({ name: "#", e: "" }); // Reset to "#" on logout
+      setUserf({ name: "", e: "" }); // Reset to "#" on logout
       setUser(null);
       navigate('/signin'); // Navigate to login page after logout
     } catch (err) {
