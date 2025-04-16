@@ -744,10 +744,15 @@ const fetchTrips = async () => {
       router={router}
       theme={demoTheme} 
       window={window}  
-      title={"TravFin"}
-    >
+      branding={{
+        logo: <img src="favicon.ico" alt="MUI logo" />,
+        title: 'TravFin',
+        
+      }}
+    > 
+   
       <DashboardLayout title="TravFin">
-        <PageContainer>
+        <PageContainer >
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <div style={{ padding: '16px' }}>

@@ -11,7 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
+// import AdbIcon from '@mui/icons-material/Adb';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
@@ -90,7 +90,7 @@ function ResponsiveAppBar() {
         method: 'POST',
         credentials: 'include'
       });
-      setUserf({ name: "", e: "#" }); // Reset to "#" on logout
+      setUserf({ name: "#", e: "#" }); // Reset to "#" on logout
       setUser(null);
       navigate('/signin'); // Navigate to login page after logout
     } catch (err) {
@@ -112,7 +112,12 @@ function ResponsiveAppBar() {
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
+          {/* <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} /> */}
+          {/* <img
+            src="/travfinlogo.png"
+             alt="logo"
+             style={{ width: 70, height: 70, marginRight: 10, display: 'flex' }}
+/> */}
           <Typography
             variant="h6"
             noWrap
