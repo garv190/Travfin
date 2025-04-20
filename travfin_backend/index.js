@@ -800,6 +800,9 @@ app.get('/user/trips', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+
+
 function authenticateToken(req, res, next) {
     const token = req.cookies?.accesstoken;
     if (!token) return res.status(401).json({ message: "Unauthorized", success: false });
@@ -810,6 +813,9 @@ function authenticateToken(req, res, next) {
         next();
     });
 }
+
+
+
 
 const sendTripInvitations = async (trip, creator, participants) => {
   try {
