@@ -18,7 +18,7 @@ import './db.js';
 import mongoose from 'mongoose';
 const { sign, verify } = jwt;
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env.CLIENT_URL,
     credentials: true
 }));
 
