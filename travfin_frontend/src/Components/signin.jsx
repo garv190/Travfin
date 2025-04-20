@@ -18,7 +18,7 @@ export default function Example() {
         }
 
 
-    const response = await fetch("http://localhost:3500/signin", {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/signin`, {
         method: "POST",
         credentials: "include", // ✅ Includes cookies
         headers: { "Content-Type": "application/json" },

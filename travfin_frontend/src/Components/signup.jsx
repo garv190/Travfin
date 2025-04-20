@@ -35,7 +35,7 @@ const SignUp = () => {
   };
 
   const submitform = () => {
-    fetch('http://localhost:3500/signup', {
+    fetch(`${process.env.REACT_APP_API_URL}/signup`, {
       method: 'POST',
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData)
@@ -278,7 +278,7 @@ export default SignUp;
 //   // const submitform=()=>{
     
     
-//   //   fetch('http://localhost:3500/signup',{
+//   //   fetch('${process.env.REACT_APP_API_URL}/signup',{
 //   //       method:'POST',
 //   //       headers: {
 //   //           "Content-Type": "application/json"
@@ -306,7 +306,7 @@ export default SignUp;
 
 // // In SignUp component
 // const submitform = () => {
-//   fetch('http://localhost:3500/signup', {
+//   fetch('${process.env.REACT_APP_API_URL}/signup', {
 //     method: 'POST',
 //     headers: { "Content-Type": "application/json" },
 //     body: JSON.stringify(formData)

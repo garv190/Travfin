@@ -41,7 +41,7 @@ function ResponsiveAppBar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:3500/getmyprofile', { credentials: 'include' })
+    fetch(`${process.env.REACT_APP_API_URL}/getmyprofile`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -69,7 +69,7 @@ function ResponsiveAppBar() {
 
   // const handleLogout = async () => {
   //   try {
-  //     await fetch('http://localhost:3500/logout', {
+  //     await fetch('${process.env.REACT_APP_API_URL}/logout', {
   //       method: 'POST',
   //       credentials: 'include'
   //     });
@@ -87,7 +87,7 @@ function ResponsiveAppBar() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:3500/logout', {
+      await fetch(`${process.env.REACT_APP_API_URL}/logout`, {
         method: 'POST',
         credentials: 'include'
       });

@@ -17,7 +17,7 @@ export default function PaymentPage() {
       setError(null);
       
       // Send DELETE request to backend
-      const response = await fetch('http://localhost:3500/payments', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/payments`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

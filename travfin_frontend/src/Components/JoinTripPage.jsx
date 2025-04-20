@@ -14,7 +14,7 @@ const JoinTripPage = () => {
       try {
         const token = new URLSearchParams(window.location.search).get('token');
         
-        const response = await fetch(`http://localhost:3500/trips/${tripId}/join?token=${token}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/trips/${tripId}/join?token=${token}`, {
           method: 'POST',
           credentials: 'include'
         });
