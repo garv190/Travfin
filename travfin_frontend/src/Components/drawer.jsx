@@ -135,6 +135,9 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
+const [billFile, setBillFile] = useState(null);
+const [billPreview, setBillPreview] = useState(null);
+
   // Trip Management
   const [tripName, setTripName] = useState('');
   const [participantEmails, setParticipantEmails] = useState('');
@@ -162,6 +165,8 @@ const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   const [userTransactions, setUserTransactions] = useState({ youOwe: [], youAreOwed: [] });
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+const [billUrl, setBillUrl] = useState('');
+const [uploadLoading, setUploadLoading] = useState(false);
 
   
 
@@ -606,6 +611,7 @@ const fetchTrips = async () => {
 
   const handleSubmitExpense = async (e) => {
     e.preventDefault();
+   
     
     if (!selectedTrip || !amount) {
       setError("Please fill all required fields");
@@ -641,6 +647,9 @@ const fetchTrips = async () => {
   });
   setShares(resetShares);
   
+  setBillFile(null);
+  setBillPreview(null);
+  setBillUrl("");
       fetchTrips();
       fetchBalances(); // Add this line
     } catch (error) {
@@ -735,7 +744,43 @@ const fetchTrips = async () => {
 
 
 
-
+const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  setUploadLoading(true); // Add this state to show loading
+  
+  try {
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
+    
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: data,
+      }
+    );
+    
+    const uploadResult = await res.json();
+    
+    if (uploadResult.secure_url) {
+      setBillFile(file);
+      setBillPreview(URL.createObjectURL(file));
+      setBillUrl(uploadResult.secure_url); // Store the URL to send with expense
+      console.log("Image uploaded:", uploadResult.secure_url);
+    } else {
+      console.error("Upload failed:", uploadResult);
+      alert("Failed to upload image. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    alert("Error uploading image. Please try again.");
+  } finally {
+    setUploadLoading(false);
+  }
+};
 
 
   return (
@@ -745,7 +790,7 @@ const fetchTrips = async () => {
       theme={demoTheme} 
       window={window}  
       branding={{
-        logo: <img src="favicon.ico" alt="MUI logo" />,
+        logo: <img src="tvl.png" alt="TravFin logo" />,
         title: 'TravFin',
         
       }}
@@ -879,6 +924,46 @@ const fetchTrips = async () => {
                         minHeight: '100px'
                       }}
                     />
+
+
+<div style={{ marginBottom: '16px' }}>
+  <label style={{ display: 'block', marginBottom: '8px' }}>Upload Bill (optional)</label>
+  <input
+    type="file"
+    onChange={handleFileChange}
+    accept="image/*,.pdf"
+    style={{
+      width: '100%',
+      padding: '12px',
+      marginBottom: '8px',
+      borderRadius: '4px',
+      border: '1px solid #ccc'
+    }}
+  />
+  {billPreview && (
+    <div style={{ marginTop: '8px' }}>
+      <p>Selected file: {billFile?.name}</p>
+      <button 
+        type="button" 
+        onClick={() => setBillFile(null)}
+        style={{
+          padding: '6px 12px',
+          backgroundColor: '#f44336',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        Remove
+      </button>
+    </div>
+  )}
+</div>
+
+
+
+
 
                     {participants.map(participant => (
                       <div key={participant._id} style={{ marginBottom: '16px' }}>
@@ -1046,7 +1131,7 @@ const fetchTrips = async () => {
           <div>
             <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px'}}>All Transactions</h3>
             
-            {tripTransactions && tripTransactions.length > 0 ? (
+            {/* {tripTransactions && tripTransactions.length > 0 ? (
               <div>
                 {tripTransactions
                 .map((transaction, idx) => (
@@ -1096,7 +1181,110 @@ const fetchTrips = async () => {
               }}>
                 No transactions in this trip yet.
               </div>
-            )}
+            )} */}
+
+
+
+{tripTransactions && tripTransactions.length > 0 ? (
+  <div>
+    {tripTransactions
+    .map((transaction, idx) => (
+      <div key={idx} style={{ 
+        padding: '16px', 
+        marginBottom: '12px', 
+        backgroundColor: '#f8f8f8',
+        borderRadius: '8px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' , color:'#000000'}}>
+          <span style={{ fontWeight: 'bold' }}>{transaction.description}</span>
+          <span>₹{transaction.amount.toFixed(2)}</span>
+        </div>
+        
+        <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+          Paid by <strong>{transaction.payer.name}</strong> • {new Date(transaction.createdAt).toLocaleDateString()}
+        </div>
+        
+        <div style={{ fontSize: '14px', color:'#000000' }}>
+          <strong>Split:</strong>
+          <div style={{ marginTop: '4px', paddingLeft: '8px' }}>
+            {transaction.shares.map((share, shareIdx) => (
+              <div key={shareIdx} style={{ 
+                padding: '6px 10px',
+                marginBottom: '4px', 
+                backgroundColor: share.user._id === user._id ? '#e3f2fd' : '#fff',
+                borderRadius: '4px',
+                border: '1px solid #e0e0e0'
+              }}>
+                {share.user.name === user.name ? 'You' : share.user.name}: ₹{share.amount.toFixed(2)}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Add the bill display code right here */}
+        {transaction.billUrl && (
+          <div style={{ marginTop: '12px', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>Attached Bill</p>
+            <div style={{ 
+              maxWidth: '100%', 
+              maxHeight: '200px', 
+              overflow: 'hidden', 
+              borderRadius: '4px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              display: 'inline-block'
+            }}>
+              <a href={transaction.billUrl} target="_blank" rel="noopener noreferrer">
+                {transaction.billUrl.toLowerCase().endsWith('.pdf') ? (
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: '#f0f0f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '150px',
+                    height: '180px'
+                  }}>
+                    <span style={{ fontSize: '14px' }}>View PDF Receipt</span>
+                  </div>
+                ) : (
+                  <img 
+                    src={transaction.billUrl}
+                    alt="Bill receipt" 
+                    style={{ maxWidth: '150px', maxHeight: '180px', display: 'block' }}
+                  />
+                )}
+              </a>
+            </div>
+          </div>
+        )}
+        
+      </div>
+    ))}
+  </div>
+) : (
+  <div style={{ 
+    padding: '16px', 
+    backgroundColor: '#f8f8f8', 
+    borderRadius: '8px',
+    textAlign: 'center',
+    color: '#666'
+  }}>
+    No transactions in this trip yet.
+  </div>
+)}
+
+
+
+
+
+
+
+
+
+
+
+
           {/* </Paper> */}
           </div>
         </>

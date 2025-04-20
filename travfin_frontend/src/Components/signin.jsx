@@ -9,41 +9,9 @@ export default function Example() {
    
   const navigate = useNavigate()
 
-  // const onSubmit = () => {
-  //   fetch('http://localhost:3500/signin', {
-  //     method: 'POST',
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     },
-  //     body: JSON.stringify(formdata)
-  //   })
-  //     .then(res => res.json())
-  //     .then(data => {
-  //       if (data.success) {
-  //         alert(data.message)
-  //         navigate("/myprofile");
-  //       } else {
-  //         alert(data.message)
-  //       }
-  //     })
-  // }
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-
-  //   if (!formdata.email || !formdata.password) {
-  //     alert("Please fill all fields");
-  //   }
-
-  //   onSubmit()
-  // }
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-
 
     if (!formdata.email || !formdata.password) {
           alert("Please fill all fields");
@@ -82,8 +50,8 @@ export default function Example() {
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-slate-600">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm ">
           <img
-            alt="Your Company"
-            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+            alt="Trafin"
+            src="tvl.png"
             className="mx-auto h-10 w-auto"
           />
           <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">

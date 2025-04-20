@@ -1,9 +1,11 @@
-const mongo=require('mongoose')
-require('dotenv').config();
+import { Schema, model } from 'mongoose';
+import dotenv from 'dotenv'
+dotenv.config()
 
 
 
-const signup=new mongo.Schema({
+
+const signup=new Schema({
     FullName:{
         type:String,
     },
@@ -17,6 +19,6 @@ const signup=new mongo.Schema({
 
 })
 
-const si=mongo.model("signup",signup)
-module.exports=si;
+const si=model("signup",signup)
+export default si;
 

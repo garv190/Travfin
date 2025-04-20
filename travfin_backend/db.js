@@ -1,9 +1,10 @@
-require('dotenv').config()
+import dotenv from 'dotenv'
+dotenv.config()
 
-const mongo=require('mongoose')
+import { connect } from 'mongoose'
 
 //if connects "then" print something else leave it 
-mongo.connect(process.env.URL).then(()=>{
+connect(process.env.URL).then(()=>{
     console.log("connected to database")
 })
 

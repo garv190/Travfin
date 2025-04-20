@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const tempUserSchema = new mongoose.Schema({
+const tempUserSchema = new Schema({
   name: String,
   email: { type: String, unique: true },
   password: String,
@@ -8,4 +8,4 @@ const tempUserSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now, expires: 600 } // Auto-delete after 10 minutes
 });
 
-module.exports = mongoose.model('TempUser', tempUserSchema);
+export default model('TempUser', tempUserSchema);

@@ -1,6 +1,6 @@
 // models/Expense.js
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import { Schema as _Schema, model } from 'mongoose';
+const Schema = _Schema;
 
 const expenseSchema = new Schema({
   description: { type: String, required: true },
@@ -11,7 +11,11 @@ const expenseSchema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: 'mongosu', required: true },
     amount: { type: Number, required: true, min: 0 }
   }],
+  billUrl: {
+    type: String,
+    default: ''
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Expense', expenseSchema);
+export default model('Expense', expenseSchema);

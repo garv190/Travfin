@@ -1,29 +1,31 @@
-const express = require('express');
+import express from 'express';
 const app = express();
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
-const bcrypt = require('bcrypt');
-require('dotenv').config();
-const TempUser = require('./MODELS/tempuser');
-const nodemailer = require('nodemailer');
-const otpGenerator = require('otp-generator');
-const Trip = require('./MODELS/Trip');
-const Invitations=require('./MODELS/Invitation');
-const Transaction = require('./MODELS/Transaction');
-const User = require('./MODELS/s'); // Assuming this is your User model
-require('./db');
-
+import cors from 'cors';
+// import { json }from 'body-parser';
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
+import { genSalt, hash as _hash, compare } from 'bcrypt';
+import dotenv from 'dotenv';
+dotenv.config();
+import TempUser  from './MODELS/tempuser.js';
+import { createTransport } from 'nodemailer';
+import { generate } from 'otp-generator';
+import Trip from './MODELS/Trip.js';
+import Invitations from './MODELS/Invitation.js';
+import Transaction from './MODELS/Transaction.js';
+import User from './MODELS/s.js'; // Assuming this is your User model
+import './db.js';
+import mongoose from 'mongoose';
+const { sign, verify } = jwt;
 app.use(cors({
     origin: "http://localhost:3000",
     credentials: true
 }));
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cookieParser());
 
-const transporter = nodemailer.createTransport({
+const transporter = createTransport({
     service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
@@ -41,8 +43,8 @@ app.post('/signup', async (req, res, next) => {
         const { name, email, password, confirmpassword } = req.body;
 
         const [existingUser, existingTempUser] = await Promise.all([
-            User.findOne({ email }),
-            TempUser.findOne({ email })
+            TempUser.findOne({ email }),
+            User.findOne({ email })
         ]);
 
         if (existingUser || existingTempUser) {
@@ -59,14 +61,14 @@ app.post('/signup', async (req, res, next) => {
             });
         }
 
-        const otp = otpGenerator.generate(6, {
+        const otp = generate(6, {
             upperCase: false,
             specialChars: false,
             alphabets: false
         });
 
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(password, salt);
+        const salt = await genSalt(10);
+        const hash = await _hash(password, salt);
 
         const newTempUser = new TempUser({
             name,
@@ -149,16 +151,16 @@ app.post('/signin', async (req, res) => {
             return res.json({ message: "User does not exist" });
         }
 
-        const isPasswordCorrect = await bcrypt.compare(password, existinguser.password);
+        const isPasswordCorrect = await compare(password, existinguser.password);
         if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid password" });
 
-        const accesstoken = jwt.sign(
+        const accesstoken = sign(
             { id: existinguser._id },
             process.env.JWT_SECRET_KEY,
             { expiresIn: "5d" }
         );
 
-        const refreshtoken = jwt.sign(
+        const refreshtoken = sign(
             { id: existinguser._id },
             process.env.JWT_REFRESH_SECRET_KEY,
             { expiresIn: "7d" }
@@ -343,7 +345,7 @@ app.post('/helloworld', authenticateToken, async (req, res) => {
 app.post('/trips/:tripId/join', async (req, res) => {
   try {
     const token = req.query.token;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decoded = verify(token, process.env.JWT_SECRET_KEY);
     
     const trip = await Trip.findById(req.params.tripId);
     if (!trip) return res.status(404).json({ success: false, message: "Trip not found" });
@@ -425,7 +427,7 @@ app.get('/trips/:tripId', authenticateToken, async (req, res) => {
 
 app.post('/transactions', authenticateToken, async (req, res) => {
   try {
-      const { tripId, amount, description, shares } = req.body;
+      const { tripId, amount, description, shares,billUrl } = req.body;
 
       const trip = await Trip.findById(tripId);
       if (!trip) {
@@ -467,7 +469,8 @@ app.post('/transactions', authenticateToken, async (req, res) => {
           amount: Number(amount),
           description,
           payer: req.user.id,
-          shares: shareEntries
+          shares: shareEntries,
+          billUrl 
       });
 
       await Trip.findByIdAndUpdate(tripId, { $push: { transactions: transaction._id } });
@@ -505,7 +508,6 @@ app.get('/transactions', authenticateToken, async (req, res) => {
       });
     }
 
-    const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(tripId)) {
       return res.status(400).json({
         success: false,
@@ -801,7 +803,7 @@ function authenticateToken(req, res, next) {
     const token = req.cookies?.accesstoken;
     if (!token) return res.status(401).json({ message: "Unauthorized", success: false });
 
-    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
         if (err) return res.status(403).json({ message: "Invalid token", success: false });
         req.user = { id: decoded.id };
         next();
@@ -811,7 +813,7 @@ function authenticateToken(req, res, next) {
 const sendTripInvitations = async (trip, creator, participants) => {
   try {
     await Promise.all(participants.map(async (participant) => {
-      const invitationToken = jwt.sign(
+      const invitationToken = sign(
         { tripId: trip._id, userId: participant._id },
         process.env.JWT_SECRET_KEY,
         { expiresIn: '7d' }
@@ -1030,6 +1032,7 @@ app.post('/logout', (req, res) => {
 
 const port = process.env.PORT || 3500;
 app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+export default app; // Export the app for testing purposes  
 
 
 

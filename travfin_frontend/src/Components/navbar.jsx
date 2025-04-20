@@ -141,16 +141,22 @@ function ResponsiveAppBar() {
               <MenuIcon />
             </IconButton>
             <Menu
-              anchorEl={anchorElNav}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
+  anchorEl={anchorElNav}
+  open={Boolean(anchorElNav)}
+  onClose={handleCloseNavMenu}
+  sx={{ display: { xs: 'block', md: 'none' } }}
+>
+  {/* Pages for mobile */}
+  {pages.map((page) => (
+    <Link to={page.url} key={page.value} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <MenuItem onClick={handleCloseNavMenu}>
+        <Typography textAlign="center">{page.value}</Typography>
+      </MenuItem>
+    </Link>
+  ))}
+
+
+</Menu>
           </Box>
 
           <Typography

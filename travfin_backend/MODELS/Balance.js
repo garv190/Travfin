@@ -1,6 +1,6 @@
 // models/Balance.js
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import { Schema as _Schema, model } from 'mongoose';
+const Schema = _Schema;
 
 const balanceSchema = new Schema({
   from: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -13,4 +13,4 @@ const balanceSchema = new Schema({
 // Index for faster querying
 balanceSchema.index({ from: 1, to: 1, group: 1 }, { unique: true });
 
-module.exports = mongoose.model('Balance', balanceSchema);
+export default model('Balance', balanceSchema);

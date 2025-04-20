@@ -1,6 +1,6 @@
 // models/Group.js
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import { Schema as _Schema, model } from 'mongoose';
+const Schema = _Schema;
 
 const groupSchema = new Schema({
   name: { type: String, required: true, unique: true },
@@ -10,4 +10,4 @@ const groupSchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Group', groupSchema);
+export default model('Group', groupSchema);

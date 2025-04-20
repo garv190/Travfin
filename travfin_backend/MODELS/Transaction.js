@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const transactionSchema = new mongoose.Schema({
+const transactionSchema = new Schema({
   trip: { 
-    type: mongoose.Schema.Types.ObjectId, 
+    type: Schema.Types.ObjectId, 
     ref: 'Trip',
     required: true
   },
@@ -16,13 +16,13 @@ const transactionSchema = new mongoose.Schema({
     required: true
   },
   payer: { 
-    type: mongoose.Schema.Types.ObjectId, 
+    type: Schema.Types.ObjectId, 
     ref: 'mongosu',
     required: true
   },
   shares: [{
     user: { 
-      type: mongoose.Schema.Types.ObjectId, 
+      type: Schema.Types.ObjectId, 
       ref: 'mongosu',
       required: true
     },
@@ -58,4 +58,4 @@ transactionSchema.pre('validate', function(next) {
   }
 });
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+export default model('Transaction', transactionSchema);

@@ -1,13 +1,13 @@
 // MODELS/Trip.js
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const tripSchema = new mongoose.Schema({
+const tripSchema = new Schema({
     name: String,
-    creator: { type: mongoose.Schema.Types.ObjectId, ref: 'mongosu' },
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'mongosu' }],
+    creator: { type: Schema.Types.ObjectId, ref: 'mongosu' },
+    participants: [{ type: Schema.Types.ObjectId, ref: 'mongosu' }],
     invitedEmails: [String], // Track invited emails
-    transactions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' }],
+    transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Trip', tripSchema);
+export default model('Trip', tripSchema);

@@ -1,9 +1,11 @@
-const mongo=require('mongoose')
-require('dotenv').config();
+import { Schema, model } from 'mongoose';
+import dotenv from 'dotenv'
+dotenv.config()
 
 
 
-const signup=new mongo.Schema({
+
+const signup=new Schema({
     name:{
         type:String,
     },
@@ -20,6 +22,6 @@ const signup=new mongo.Schema({
 
 })
 
-const mongosu=mongo.model("mongosu",signup)
-module.exports=mongosu;
+const mongosu=model("mongosu",signup)
+export default mongosu;
 
