@@ -20,7 +20,7 @@ const { sign, verify } = jwt;
 
 app.use(cors({
   origin: process.env.CLIENT_URL,
-  credential: true,
+  credentials: true,
 }));
 
 app.use(express.json());
