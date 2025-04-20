@@ -22,7 +22,7 @@ export default function ReVerification() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/forgotpassword`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/forgotpassword`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp })

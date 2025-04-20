@@ -69,7 +69,7 @@ function ResponsiveAppBar() {
 
   // const handleLogout = async () => {
   //   try {
-  //     await fetch('${process.env.REACT_APP_API_URL}/logout', {
+  //     await fetch('${process.env.REACT_APP_URL}/logout', {
   //       method: 'POST',
   //       credentials: 'include'
   //     });

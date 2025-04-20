@@ -20,7 +20,7 @@ export default function Example() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/signin`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/signin`, {
         method: "POST",
         credentials: "include", // ✅ Includes cookies
         headers: { "Content-Type": "application/json" },

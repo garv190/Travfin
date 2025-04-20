@@ -9,7 +9,7 @@ const ChatInterface = () => {
   const [botMessage, setBotMessage] = useState('');
   const messagesEndRef = useRef(null);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_URL || 'http://localhost:5000';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
