@@ -805,9 +805,11 @@ app.get('/user/trips', authenticateToken, async (req, res) => {
 
 function authenticateToken(req, res, next) {
     const token = req.cookies?.accesstoken;
+    console.log("Token:", token); // Log the token for debugging
     if (!token) return res.status(401).json({ message: "Unauthorized", success: false });
 
     verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+      console.log("Decoded:", decoded); // Log the decoded token for debugging
         if (err) return res.status(403).json({ message: "Invalid token", success: false });
         req.user = { id: decoded.id };
         next();
