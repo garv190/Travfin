@@ -19,8 +19,13 @@ import mongoose from 'mongoose';
 const { sign, verify } = jwt;
 
 app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true,
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://elegant-speculoos-e92666.netlify.app/',
+       
+      ] 
+    : process.env.CLIENT_URL,
+  credentials: true
 }));
 
 app.use(express.json());
@@ -170,19 +175,20 @@ app.post('/signin', async (req, res) => {
         existinguser.refreshtoken = refreshtoken;
         await existinguser.save();
 
-        res.cookie("accesstoken", accesstoken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-            path: "/"
-        });
+       
+res.cookie("accesstoken", accesstoken, {
+  httpOnly: true,
+  secure: true, 
+  sameSite: 'None',  
+  path: "/"
+});
 
-        res.cookie("refreshToken", refreshtoken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-            path: "/"
-        });
+res.cookie("refreshToken", refreshtoken, {
+  httpOnly: true,
+  secure: true, 
+  sameSite: 'None', 
+  path: "/"
+});
 
         res.status(200).json({
             success: true,
@@ -806,15 +812,30 @@ app.get('/user/trips', authenticateToken, async (req, res) => {
 function authenticateToken(req, res, next) {
   console.log("Request Headers:", req); // Log headers for debugging
 
-    const token = req.cookies?.accesstoken;
-    console.log("Token:", token); // Log the token for debugging
-    if (!token) return res.status(401).json({ message: "Unauthorized", success: false });
+    let token = req.cookies?.accesstoken;
 
-    verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-      console.log("Decoded:", decoded); // Log the decoded token for debugging
-        if (err) return res.status(403).json({ message: "Invalid token", success: false });
-        req.user = { id: decoded.id };
-        next();
+     // If not in cookies, check Authorization header (for API requests)
+     if (!token && req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.split(' ')[1];
+      }
+  }
+  
+  // If still no token, check query string (less secure but useful for debugging)
+  if (!token && req.query.token) {
+      token = req.query.token;
+  }
+  
+  console.log("Token used:", token ? "Present" : "Not found");
+
+  if (!token) return res.status(401).json({ message: "Unauthorized - No token provided", success: false });
+
+
+  verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Invalid or expired token", success: false });
+    req.user = { id: decoded.id };
+    next();
     });
 }
 

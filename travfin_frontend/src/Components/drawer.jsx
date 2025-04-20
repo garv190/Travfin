@@ -184,7 +184,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
     setSelectedTransactionId(transactionId);
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/payments`, {
+      const response = await fetch(`${process.env.REACT_APP_URLL}/payments`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -217,7 +217,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
  const fetchTripTransactions = async (tripId) => {
   try {
     console.log("Fetching transactions for trip:", tripId);
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/transactions?tripId=${tripId}`, {
+    const response = await fetch(`${process.env.REACT_APP_URL}/transactions?tripId=${tripId}`, {
       method: 'GET',
       credentials: "include",
       headers: {
@@ -417,7 +417,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
 useEffect(() => {
   const fetchExpenses = async (tripId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/transactions?tripId=${tripId}`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/transactions?tripId=${tripId}`, {
         credentials: "include",
       });
       const data = await response.json();
@@ -445,7 +445,7 @@ useEffect(() => {
   const fetchParticipants = async () => {
     if (selectedTrip) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/trips/${selectedTrip}`, {
+        const response = await fetch(`${process.env.REACT_APP_URL}/trips/${selectedTrip}`, {
           method: "GET",
           credentials: "include",
         });
@@ -470,7 +470,7 @@ useEffect(() => {
 const fetchTrips = React.useCallback(async () => {
   try {
     console.log("Fetching trips...");
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/user/trips`, {
+    const response = await fetch(`${process.env.REACT_APP_URL}/user/trips`, {
       method: "GET",
       credentials: "include",
     });
@@ -501,7 +501,7 @@ const fetchTrips = React.useCallback(async () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/getmyprofile`, {
+        const response = await fetch(`${process.env.REACT_APP_URL}/getmyprofile`, {
           method: "GET",
           credentials: "include",
         });
@@ -526,7 +526,7 @@ const fetchTrips = React.useCallback(async () => {
 
   // const fetchTrips = async () => {
   //   try {
-  //     const response = await fetch("${process.env.REACT_APP_API_URL}/user/trips", {
+  //     const response = await fetch("${process.env.REACT_APP_URL}/user/trips", {
   //       method: "GET",
   //       credentials: "include",
   //     });
@@ -554,7 +554,7 @@ const fetchTrips = React.useCallback(async () => {
 
   const fetchBalances = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/user/balances`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/user/balances`, {
         method: "GET",
         credentials: "include",
       });
@@ -583,7 +583,7 @@ const fetchTrips = React.useCallback(async () => {
 
     setTripLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/trips`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/trips`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -620,7 +620,7 @@ const fetchTrips = React.useCallback(async () => {
 
     setExpenseLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/transactions`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -707,7 +707,7 @@ const fetchTrips = React.useCallback(async () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/helloworld`, {
+      const response = await fetch(`${process.env.REACT_APP_URL}/helloworld`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
