@@ -149,6 +149,7 @@ const [billPreview, setBillPreview] = useState(null);
   const [amount, setAmount] = useState('');
   const [selectedTrip, setSelectedTrip] = useState('');
   const [description, setDescription] = useState('');
+  // eslint-disable-next-line 
   const [expenses, setExpenses] = useState([]);
   const [expenseLoading, setExpenseLoading] = useState(false);
   const [participants, setParticipants] = useState([]);
@@ -165,7 +166,9 @@ const [billPreview, setBillPreview] = useState(null);
   const [userTransactions, setUserTransactions] = useState({ youOwe: [], youAreOwed: [] });
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+  // eslint-disable-next-line 
 const [billUrl, setBillUrl] = useState('');
+// eslint-disable-next-line 
 const [uploadLoading, setUploadLoading] = useState(false);
 
   
@@ -464,58 +467,7 @@ useEffect(() => {
   fetchParticipants();
 }, [selectedTrip]);
 
-
-
-
-
-
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch("http://localhost:3500/getmyprofile", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
-        const data = await response.json();
-        if (data.success) {
-          setUser({ name: data.user1, email: data.detail1 });
-          fetchTrips();
-          fetchBalances(); // Add this line
-        }
-      } catch (error) {
-        setError("Failed to load user data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [navigate]);
-
-  // const fetchTrips = async () => {
-  //   try {
-  //     const response = await fetch("http://localhost:3500/user/trips", {
-  //       method: "GET",
-  //       credentials: "include",
-  //     });
-  //     const data = await response.json();
-  //     if (data.success) setTrips(data.trips);
-  //     fetchBalances(); // Refresh balances after any trip update
-
-
-
-  //   } catch (error) {
-  //     setError("Failed to load trips");
-  //   }
-  // };
-
-
-
-const fetchTrips = async () => {
+const fetchTrips = React.useCallback(async () => {
   try {
     console.log("Fetching trips...");
     const response = await fetch("http://localhost:3500/user/trips", {
@@ -543,7 +495,55 @@ const fetchTrips = async () => {
     console.error("Error fetching trips:", error);
     setError("Failed to load trips");
   }
-};
+}, []);
+
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("http://localhost:3500/getmyprofile", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
+        const data = await response.json();
+        if (data.success) {
+          setUser({ name: data.user1, email: data.detail1 });
+          fetchTrips();
+          fetchBalances(); // Add this line
+        }
+      } catch (error) {
+        setError("Failed to load user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [navigate, fetchTrips]);
+
+  // const fetchTrips = async () => {
+  //   try {
+  //     const response = await fetch("http://localhost:3500/user/trips", {
+  //       method: "GET",
+  //       credentials: "include",
+  //     });
+  //     const data = await response.json();
+  //     if (data.success) setTrips(data.trips);
+  //     fetchBalances(); // Refresh balances after any trip update
+
+
+
+  //   } catch (error) {
+  //     setError("Failed to load trips");
+  //   }
+  // };
+
+
+
+
 
 
 

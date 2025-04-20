@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 
 export default function Example() {
   const [formdata, setformdata] = useState({ email: "", password: "" })
-  const [message, setMessage] = useState("");
-   const [user, setUser] = useState({name:"", e:" "});
+  const [setMessage] = useState("");
+   const [setUser] = useState({name:"", e:" "});
    
   const navigate = useNavigate()
 

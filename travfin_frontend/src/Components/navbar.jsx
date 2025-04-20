@@ -35,7 +35,8 @@ const settings = [
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [user, setUser] = useState(null);
+  
+  const [setUser] = useState(null);
     const [userf, setUserf] = useState({ name: "", e: "" }); // ✅ Clear initial state
   const navigate = useNavigate();
 
