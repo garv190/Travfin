@@ -804,6 +804,8 @@ app.get('/user/trips', authenticateToken, async (req, res) => {
 
 
 function authenticateToken(req, res, next) {
+  console.log("Request Headers:", req); // Log headers for debugging
+
     const token = req.cookies?.accesstoken;
     console.log("Token:", token); // Log the token for debugging
     if (!token) return res.status(401).json({ message: "Unauthorized", success: false });
