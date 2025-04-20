@@ -19,7 +19,8 @@ import mongoose from 'mongoose';
 const { sign, verify } = jwt;
 
 app.use(cors({
-  origin: process.env.CLIENT_URL
+  origin: process.env.CLIENT_URL,
+  credential: true,
 }));
 
 app.use(express.json());
