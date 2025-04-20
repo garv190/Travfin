@@ -17,10 +17,8 @@ import User from './MODELS/s.js'; // Assuming this is your User model
 import './db.js';
 import mongoose from 'mongoose';
 const { sign, verify } = jwt;
-app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true
-}));
+
+app.use(cors());
 
 app.use(express.json());
 app.use(cookieParser());
