@@ -98,9 +98,11 @@ function ResponsiveAppBar() {
         credentials: 'include'
       });
       // window.location.href = '/signin';
+      navigate('/signin'); // Navigate to login page after logout
       setUserf({ name: "#", e: "#" }); // Reset to "#" on logout
       setUser(null);
-      navigate('/signin'); // Navigate to login page after logout
+      
+      // navigate('/signin'); // Navigate to login page after logout
     } catch (err) {
       console.error('Logout failed:', err);
     }
