@@ -19,7 +19,7 @@ import mongoose from 'mongoose';
 const { sign, verify } = jwt;
 
 app.use(cors({
-  origin: ['https://elegant-speculoos-e92666.netlify.app'], 
+  origin: ['https://travfin-carefree-travel.netlify.app/'], 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
