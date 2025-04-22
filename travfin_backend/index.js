@@ -19,7 +19,7 @@ import mongoose from 'mongoose';
 const { sign, verify } = jwt;
 
 app.use(cors({
-  origin: ['https://elegant-speculoos-e92666.netlify.app'], // No trailing slash
+  origin: ['https://elegant-speculoos-e92666.netlify.app'], 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -663,12 +663,14 @@ app.post('/payments', authenticateToken, async (req, res) => {
 
 app.delete('/payments', authenticateToken, async (req, res) => {
   try {
-    const { transactionId } = req.body;
+    // const { transactionId } = req.body;
+    const {transactionId} = String(req.body.transactionId).trim();
     
-    if (!transactionId) {
+    
+    if (!transactionId || !mongoose.Types.ObjectId.isValid(transactionId)) {
       return res.status(400).json({
         success: false,
-        message: "Transaction ID is required"
+        message: "Valid transaction ID is required"
       });
     }
 
@@ -701,7 +703,21 @@ app.delete('/payments', authenticateToken, async (req, res) => {
     }
 
     // Delete the transaction
-    await Transaction.findByIdAndDelete(transactionId);
+    const deletedTransaction = await Transaction.findOneAndDelete({
+      _id: transactionId,
+      $or: [
+        { 'payer._id': currentUserId },
+        { 'shares.user': currentUserId }
+      ]
+    });
+
+
+    if (!deletedTransaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found or unauthorized"
+      });
+    }
 
     // Remove from trip's transactions array
     await Trip.findByIdAndUpdate(transaction.trip, {
@@ -1054,8 +1070,23 @@ app.post('/forgotpassword', async (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-    res.clearCookie("accesstoken");
-    res.clearCookie("refreshToken");
+    // res.clearCookie("accesstoken");
+    res.clearCookie('accesstoken', {
+      httpOnly: true,
+      secure: true, 
+      sameSite: 'None', 
+      path: "/"
+    });
+    // res.clearCookie("refreshToken");
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true, 
+      sameSite: 'None', 
+      path: "/"
+    });
+
+
     res.json({ success: true, message: "Logged out successfully" });
 });
 

@@ -16,7 +16,6 @@ export default function PaymentPage() {
       setLoading(true);
       setError(null);
       
-      // Send DELETE request to backend
       const response = await fetch(`${process.env.REACT_APP_URL}/payments`, {
         method: 'DELETE',
         headers: {
@@ -25,25 +24,25 @@ export default function PaymentPage() {
         credentials: 'include',
         body: JSON.stringify({ transactionId }),
       });
-
-
-      navigate('/');
-      alert("Transaction has been completed")
-
+  
+      // First check response status
       if (!response.ok) {
-        throw new Error('Payment failed. Please try again.');
-       
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Payment failed. Please try again.');
       }
-
-      // Redirect to home page after successful deletion
-     
+  
+      // Only navigate on success
+      alert("Transaction has been completed");
+      navigate('/');
     } catch (err) {
       setError(err.message);
+      // Stay on current page for error
     } finally {
       setLoading(false);
     }
   };
 
+  
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">

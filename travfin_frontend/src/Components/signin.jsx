@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 export default function Example() {
   const [formdata, setformdata] = useState({ email: "", password: "" });
   //eslint-disable-next-line
-  const [message, setMessage] = useState(""); // Correctly destructured
+  const [message, setMessage] = useState(""); 
   //eslint-disable-next-line
-  const [user, setUser] = useState({ name: "", e: "" }); // Correctly destructured
+  const [user, setUser] = useState({ name: "", e: "" }); 
 
   const navigate = useNavigate();
 
@@ -22,15 +22,15 @@ export default function Example() {
     try {
       const response = await fetch(`${process.env.REACT_APP_URL}/signin`, {
         method: "POST",
-        credentials: "include", // ✅ Includes cookies
+        credentials: "include", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formdata),
       });
 
       const data = await response.json();
       if (data.success) {
-        setUser({ name: data.user1, e: data.detail1 }); // ✅ Save user details in state
-        navigate("/"); // ✅ Redirect to Dashboard after login
+        setUser({ name: data.user1, e: data.detail1 }); 
+        navigate("/"); // 
         alert(data.message);
       } else {
         setMessage(data.message);

@@ -87,10 +87,17 @@ function ResponsiveAppBar() {
 
   const handleLogout = async () => {
     try {
+
+
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('tempData');
+
+
       await fetch(`${process.env.REACT_APP_URL}/logout`, {
         method: 'POST',
         credentials: 'include'
       });
+      window.location.href = '/login';
       setUserf({ name: "#", e: "#" }); // Reset to "#" on logout
       setUser(null);
       navigate('/signin'); // Navigate to login page after logout
