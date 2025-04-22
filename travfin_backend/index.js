@@ -299,7 +299,7 @@ app.post('/helloworld', authenticateToken, async (req, res) => {
     const { participantEmails } = req.body;
     // const creatorId = req.user.id;
 
-    const trafin=`http://localhost:3000/`
+    const trafin=`https://travfin-carefree-travel.netlify.app/`
 
     // Validate input
     if (!participantEmails || typeof participantEmails !== 'string') {
