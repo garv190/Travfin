@@ -4,7 +4,7 @@ import cors from 'cors';
 // import { json }from 'body-parser';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
-import { genSalt, hash as _hash, compare } from 'bcrypt';
+import { genSaltSync , hashSync, compareSync } from 'bcryptjs';
 import dotenv from 'dotenv';
 dotenv.config();
 import TempUser  from './MODELS/tempuser.js';
@@ -19,13 +19,10 @@ import mongoose from 'mongoose';
 const { sign, verify } = jwt;
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://elegant-speculoos-e92666.netlify.app/',
-       
-      ] 
-    : process.env.CLIENT_URL,
-  credentials: true
+  origin: ['https://elegant-speculoos-e92666.netlify.app'], // No trailing slash
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -73,8 +70,8 @@ app.post('/signup', async (req, res, next) => {
             alphabets: false
         });
 
-        const salt = await genSalt(10);
-        const hash = await _hash(password, salt);
+        const salt = await genSaltSync(10);
+        const hash = await hashSync(password, salt);
 
         const newTempUser = new TempUser({
             name,
@@ -157,7 +154,7 @@ app.post('/signin', async (req, res) => {
             return res.json({ message: "User does not exist" });
         }
 
-        const isPasswordCorrect = await compare(password, existinguser.password);
+        const isPasswordCorrect = await compareSync(password, existinguser.password);
         if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid password" });
 
         const accesstoken = sign(

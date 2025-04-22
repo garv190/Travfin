@@ -1,0 +1,29 @@
+version: '3'
+services:
+  travfin_frontend:
+    build:
+      context: ./travfin_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./travfin_frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    depends_on:
+      - travfin_backend
+    environment:
+      - REACT_APP_URL=http://localhost:3500   # Set backend URL for frontend
+
+  travfin_backend:
+    build:
+      context: ./travfin_backend
+    ports:
+      - "3500:3500"
+    volumes:
+      - ./travfin_backend:/app
+      - /app/node_modules
+    environment:
+      - MONGO_URI=mongodb+srv://aayush:abcd1234@cluster0.zwknn05.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+    stdin_open: true
+    tty: true

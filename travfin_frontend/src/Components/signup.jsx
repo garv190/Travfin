@@ -37,6 +37,7 @@ const SignUp = () => {
   const submitform = () => {
     fetch(`${process.env.REACT_APP_URL}/signup`, {
       method: 'POST',
+      credentials: 'include', 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData)
     })
