@@ -15,8 +15,18 @@ export default function PaymentPage() {
     try {
       setLoading(true);
       setError(null);
+
+      const apiUrl = process.env.REACT_APP_URL || '';
+      if (!apiUrl) {
+        throw new Error('API URL is not configured');
+      }
       
-      const response = await fetch(`${process.env.REACT_APP_URL}/payments`, {
+      if (!transactionId) {
+        throw new Error('Transaction ID is missing');
+      }
+
+      
+      const response = await fetch(`${apiUrl}/payments`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -24,7 +34,7 @@ export default function PaymentPage() {
         credentials: 'include',
         body: JSON.stringify({ transactionId }),
       });
-  
+      
       // First check response status
       if (!response.ok) {
         const errorData = await response.json();
@@ -42,7 +52,7 @@ export default function PaymentPage() {
     }
   };
 
-  
+
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">

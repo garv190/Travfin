@@ -664,7 +664,7 @@ app.post('/payments', authenticateToken, async (req, res) => {
 app.delete('/payments', authenticateToken, async (req, res) => {
   try {
     // const { transactionId } = req.body;
-    const {transactionId} = String(req.body.transactionId).trim();
+    const transactionId = req.body.transactionId ? String(req.body.transactionId).trim() : null;
     
     
     if (!transactionId || !mongoose.Types.ObjectId.isValid(transactionId)) {
