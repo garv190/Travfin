@@ -336,7 +336,7 @@ def set_city(state: PlannerState, city: str) -> PlannerState:
     return {
         **state,
         "city": city,
-        "messages": state['messages'] + [HumanMessage(content=f"City: {city}").dict()],
+        "messages": state['messages'] + [HumanMessage(content=f"City: {city}").model_dump()],
         "current_step": "interests"
     }
 

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: travel-planner-api
+    runtime: python
+    root: .  # Point to the chatbot directory
+    buildCommand: pip install -r requirements.txt  # Explicit path
+    startCommand: gunicorn chatbot.chatbot:app 
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false  # This will be manually set in Render dashboard
+      - key: FRONTEND_URL
+        value: https://travfin-carefree-travel.netlify.app

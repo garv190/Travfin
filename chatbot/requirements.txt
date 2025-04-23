@@ -1,7 +1,7 @@
 flask==2.3.3
 flask-cors==4.0.0
 python-dotenv==1.0.0
-langchain-core==0.1.16
+langchain-core>=0.2.0  # Newer compatible version
 langchain-groq==0.1.6
 gunicorn==21.2.0
 typing-extensions==4.8.0
