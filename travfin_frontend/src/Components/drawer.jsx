@@ -417,21 +417,36 @@ const [uploadLoading, setUploadLoading] = useState(false);
 useEffect(() => {
   const fetchExpenses = async (tripId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_URL}/transactions?tripId=${tripId}`, {
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (data.success) setExpenses(data.transactions);
-    } catch (error) {
-      setError("Failed to load expenses");
-    }
-  };
 
-  if (currentSegment.startsWith('expenses/')) {
-    const tripId = currentSegment.split('/')[1];
-    fetchExpenses(tripId);
-  }
-}, [currentSegment]);
+        // Validate tripId before making the API call
+        if (!tripId || !/^[0-9a-fA-F]{24}$/.test(tripId)) {
+          console.error(`Invalid Trip ID format: "${tripId}"`);
+          setError("Invalid Trip ID. Please select a valid trip.");
+          return;
+        }
+
+        const response = await fetch(`${process.env.REACT_APP_URL}/transactions?tripId=${tripId}`, {
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success) setExpenses(data.transactions);
+        else setError(data.message || "Failed to load expenses");
+      } catch (error) {
+        setError("Failed to load expenses");
+      }
+    };
+  
+    if (currentSegment === 'expenses') {
+      setError("Please select a trip to view expenses");
+    } else if (currentSegment.startsWith('expenses/')) {
+      const tripId = currentSegment.split('/')[1];
+      if (tripId) {
+        fetchExpenses(tripId);
+      } else {
+        setError("No trip selected");
+      }
+    }
+  }, [currentSegment]);
 
 
 
