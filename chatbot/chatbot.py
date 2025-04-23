@@ -282,6 +282,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
 app = Flask(__name__)
+app.config['SERVER_NAME'] = os.environ.get('SERVER_NAME', 'localhost:5000')
 
 # Configure CORS - in production, specify your React app's domain
 CORS(app, resources={
@@ -516,6 +517,9 @@ def health_check():
     })
 
 if __name__ == '__main__':
-    # Use environment variable for port with a default
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=os.environ.get("DEBUG", "False").lower() == "true")
+    # Development-only run configuration
+    if os.environ.get("DEBUG") == "True":
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    else:
+        # Production should use Gunicorn exclusively
+        pass
