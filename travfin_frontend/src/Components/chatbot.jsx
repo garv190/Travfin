@@ -9,7 +9,7 @@ const ChatInterface = () => {
   const [botMessage, setBotMessage] = useState('');
   const messagesEndRef = useRef(null);
 
-  const API_URL = process.env.REACT_APP_URL_CHATBOT || 'http://localhost:5000';
+  // const API_URL = process.env.REACT_APP_URL_CHATBOT || 'http://localhost:5000';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,7 +36,7 @@ const ChatInterface = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/init`);
+      const response = await axios.post(`${process.env.REACT_APP_URL_CHATBOT}/init`);
       const initMessages = response.data.state.messages || [
         { type: 'bot', content: response.data.message },
       ];
@@ -67,7 +67,7 @@ const ChatInterface = () => {
     ];
 
     try {
-      const response = await axios.post(`${API_URL}/update`, {
+      const response = await axios.post(`${process.env.REACT_APP_URL_CHATBOT}/update`, {
         state,
         user_input: input,
       });
