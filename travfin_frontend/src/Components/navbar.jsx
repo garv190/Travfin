@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 // import AdbIcon from '@mui/icons-material/Adb';
-import { Link} from 'react-router-dom';
+import { Link, useLocation} from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 // const pages = ['Chatbot', 'Conversation', 'Travel Guide'];
@@ -33,6 +33,7 @@ const settings = [
 ];
 
 function ResponsiveAppBar() {
+  const location = useLocation();
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
   
@@ -49,7 +50,7 @@ function ResponsiveAppBar() {
         }
       })
       .catch(err => console.log(err));
-  }, [userf]);
+  }, [location]);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -107,10 +108,9 @@ function ResponsiveAppBar() {
     sessionStorage.clear();
     
     // Force full page reload to reset application state
+    setUserf({ name: "", e: "" });
+    // Force full reload to clear state
     window.location.href = '/signin';
-
-
-      setUserf({ name: "#", e: "#" }); // Reset to "#" on logout
       setUser(null);
       
       // navigate('/signin'); // Navigate to login page after logout

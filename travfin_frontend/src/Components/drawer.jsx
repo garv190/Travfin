@@ -611,13 +611,12 @@ const fetchTrips = React.useCallback(async () => {
 
   const handleSubmitExpense = async (e) => {
     e.preventDefault();
-   
     
     if (!selectedTrip || !amount) {
       setError("Please fill all required fields");
       return;
     }
-
+  
     setExpenseLoading(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_URL}/transactions`, {
@@ -628,28 +627,30 @@ const fetchTrips = React.useCallback(async () => {
           tripId: selectedTrip,
           amount: parseFloat(amount),
           description,
-          shares
+          shares,
+          billUrl: billUrl // Add this line to include the bill URL
         }),
       });
-
+  
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Failed to add expense");
-
+  
       setSuccess("Expense added successfully!");
       setAmount('');
       setDescription('');
       setSelectedTrip('');
-
- // Reset shares to 0 for all participants
-  const resetShares = {};
-  participants.forEach(p => {
-    resetShares[p._id] = 0;
-  });
-  setShares(resetShares);
   
-  setBillFile(null);
-  setBillPreview(null);
-  setBillUrl("");
+      // Reset shares to 0 for all participants
+      const resetShares = {};
+      participants.forEach(p => {
+        resetShares[p._id] = 0;
+      });
+      setShares(resetShares);
+      
+      setBillFile(null);
+      setBillPreview(null);
+      setBillUrl("");
+      
       fetchTrips();
       fetchBalances(); // Add this line
     } catch (error) {
@@ -658,7 +659,6 @@ const fetchTrips = React.useCallback(async () => {
       setExpenseLoading(false);
     }
   };
-
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -1184,11 +1184,9 @@ const handleFileChange = async (e) => {
             )} */}
 
 
-
 {tripTransactions && tripTransactions.length > 0 ? (
   <div>
-    {tripTransactions
-    .map((transaction, idx) => (
+    {tripTransactions.map((transaction, idx) => (
       <div key={idx} style={{ 
         padding: '16px', 
         marginBottom: '12px', 
@@ -1196,7 +1194,7 @@ const handleFileChange = async (e) => {
         borderRadius: '8px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' , color:'#000000'}}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color:'#000000'}}>
           <span style={{ fontWeight: 'bold' }}>{transaction.description}</span>
           <span>₹{transaction.amount.toFixed(2)}</span>
         </div>
@@ -1222,43 +1220,95 @@ const handleFileChange = async (e) => {
           </div>
         </div>
         
-        {/* Add the bill display code right here */}
+        {/* Bill Display Section */}
         {transaction.billUrl && (
-          <div style={{ marginTop: '12px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>Attached Bill</p>
+          <div style={{ marginTop: '16px' }}>
             <div style={{ 
-              maxWidth: '100%', 
-              maxHeight: '200px', 
-              overflow: 'hidden', 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 12px',
+              backgroundColor: '#e3f2fd',
               borderRadius: '4px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              display: 'inline-block'
+              marginBottom: '8px'
             }}>
-              <a href={transaction.billUrl} target="_blank" rel="noopener noreferrer">
-                {transaction.billUrl.toLowerCase().endsWith('.pdf') ? (
-                  <div style={{
-                    padding: '20px',
-                    backgroundColor: '#f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '150px',
-                    height: '180px'
+              <span style={{ fontWeight: '500' }}>Attached Bill</span>
+              <button
+                onClick={() => window.open(transaction.billUrl, '_blank')}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                View Full
+              </button>
+            </div>
+            
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              border: '1px solid #e0e0e0',
+              borderRadius: '4px',
+              padding: '8px',
+              backgroundColor: '#fff'
+            }}>
+              {transaction.billUrl.toLowerCase().endsWith('.pdf') ? (
+                <div style={{
+                  padding: '32px 16px',
+                  backgroundColor: '#f5f5f5',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '200px',
+                  borderRadius: '4px'
+                }}>
+                  <div style={{ 
+                    fontSize: '36px', 
+                    color: '#d32f2f', 
+                    marginBottom: '8px' 
                   }}>
-                    <span style={{ fontSize: '14px' }}>View PDF Receipt</span>
+                    📄
                   </div>
-                ) : (
+                  <span style={{ fontSize: '14px', textAlign: 'center' }}>PDF Receipt</span>
+                  <button
+                    onClick={() => window.open(transaction.billUrl, '_blank')}
+                    style={{
+                      marginTop: '12px',
+                      padding: '6px 12px',
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Open PDF
+                  </button>
+                </div>
+              ) : (
+                <div style={{ cursor: 'pointer' }} onClick={() => window.open(transaction.billUrl, '_blank')}>
                   <img 
                     src={transaction.billUrl}
-                    alt="Bill receipt" 
-                    style={{ maxWidth: '150px', maxHeight: '180px', display: 'block' }}
+                    alt="Receipt" 
+                    style={{ 
+                      maxWidth: '200px', 
+                      maxHeight: '200px', 
+                      objectFit: 'contain',
+                      borderRadius: '4px'
+                    }}
                   />
-                )}
-              </a>
+                </div>
+              )}
             </div>
           </div>
         )}
-        
       </div>
     ))}
   </div>
@@ -1273,7 +1323,6 @@ const handleFileChange = async (e) => {
     No transactions in this trip yet.
   </div>
 )}
-
 
 
 
