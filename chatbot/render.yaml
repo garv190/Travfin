@@ -4,7 +4,7 @@ services:
     name: travel-planner-api
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn chatbot:app
     envVars:
       - key: GROQ_API_KEY
         sync: false  # This will be manually set in Render dashboard
