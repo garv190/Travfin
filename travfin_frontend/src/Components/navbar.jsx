@@ -97,8 +97,19 @@ function ResponsiveAppBar() {
         method: 'POST',
         credentials: 'include'
       });
-      // window.location.href = '/signin';
-      navigate('/signin'); // Navigate to login page after logout
+      // // window.location.href = '/signin';
+      // navigate('/signin'); // Navigate to login page after logout
+
+
+
+      // Clear all client-side storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Force full page reload to reset application state
+    window.location.href = '/signin';
+
+
       setUserf({ name: "#", e: "#" }); // Reset to "#" on logout
       setUser(null);
       

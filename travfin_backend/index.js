@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { genSaltSync , hashSync, compareSync } from 'bcryptjs';
 import dotenv from 'dotenv';
 dotenv.config();
+import path from 'path';
 import TempUser  from './MODELS/tempuser.js';
 import { createTransport } from 'nodemailer';
 import { generate } from 'otp-generator';
@@ -1088,6 +1089,11 @@ app.post('/logout', (req, res) => {
 
 
     res.json({ success: true, message: "Logged out successfully" });
+});
+
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 
 const port = process.env.PORT || 3500;
