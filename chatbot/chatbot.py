@@ -517,9 +517,6 @@ def health_check():
     })
 
 if __name__ == '__main__':
-    # Development-only run configuration
-    if os.environ.get("DEBUG") == "True":
-        app.run(host='0.0.0.0', port=5000, debug=True)
-    else:
-        # Production should use Gunicorn exclusively
-        pass
+    port = int(os.environ.get("PORT", 5000))  # Always use env var first
+    app.run(host='0.0.0.0', port=port)  # Crucial for cloud deployment
+   
