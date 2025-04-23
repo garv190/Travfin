@@ -3,10 +3,11 @@ services:
   - type: web
     name: travel-planner-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    root: .  # Root is travfin/
+    buildCommand: pip install -r chatbot/requirements.txt
     startCommand: gunicorn chatbot:app
     envVars:
       - key: GROQ_API_KEY
         sync: false  # This will be manually set in Render dashboard
       - key: FRONTEND_URL
-        value: https://your-react-app-name.onrender.com  # Update this with your frontend URL once deployed
+        value: https://travfin-carefree-travel.netlify.app # Update this with your frontend URL once deployed
