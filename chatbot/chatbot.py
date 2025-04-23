@@ -261,9 +261,6 @@
 
 
 
-
-
-
 import os
 import re
 from datetime import datetime
@@ -282,13 +279,12 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
 app = Flask(__name__)
-app.config['SERVER_NAME'] = os.environ.get('SERVER_NAME', 'localhost:5000')
+# Remove the SERVER_NAME config as it can cause routing issues in production
+# app.config['SERVER_NAME'] = os.environ.get('SERVER_NAME', 'localhost:5000')
 
 # Configure CORS - in production, specify your React app's domain
 CORS(app, resources={
-    r"/api/*": {"origins": os.getenv("FRONTEND_URL", "http://localhost:3000")},
-    r"/init": {"origins": os.getenv("FRONTEND_URL", "http://localhost:3000")},
-    r"/update": {"origins": os.getenv("FRONTEND_URL", "http://localhost:3000")}
+    r"/*": {"origins": os.getenv("FRONTEND_URL", "*")}
 })
 
 # Define data structures
@@ -346,7 +342,7 @@ def set_interests(state: PlannerState, interests: str) -> PlannerState:
     return {
         **state,
         "interests": interest_list,
-        "messages": state['messages'] + [HumanMessage(content=f"Interests: {interests}").dict()],
+        "messages": state['messages'] + [HumanMessage(content=f"Interests: {interests}").model_dump()],  # Fix here
         "current_step": "trip_dates"
     }
 
@@ -355,7 +351,7 @@ def set_trip_dates(state: PlannerState, start_date: str, duration: int) -> Plann
     return {
         **state,
         "trip_dates": {"start_date": start_date, "duration": duration},
-        "messages": state['messages'] + [HumanMessage(content=user_message).dict()],
+        "messages": state['messages'] + [HumanMessage(content=user_message).model_dump()],  # Fix here
         "current_step": "create_itinerary"
     }
 
@@ -370,14 +366,14 @@ def create_itinerary(state: PlannerState) -> PlannerState:
         
         return {
             **state,
-            "messages": state['messages'] + [AIMessage(content=response.content).dict()],
+            "messages": state['messages'] + [AIMessage(content=response.content).model_dump()],  # Fix here
             "itinerary": response.content,
             "current_step": "complete"
         }
     except Exception as e:
         return {
             **state,
-            "messages": state['messages'] + [AIMessage(content=f"Error creating itinerary: {str(e)}").dict()],
+            "messages": state['messages'] + [AIMessage(content=f"Error creating itinerary: {str(e)}").model_dump()],  # Fix here
             "current_step": "error"
         }
 
@@ -469,7 +465,7 @@ def update_session():
                         new_state = {
                             **current_state,
                             "trip_dates": {"start_date": user_input},
-                            "messages": current_state['messages'] + [HumanMessage(content=f"Start Date: {user_input}").dict()]
+                            "messages": current_state['messages'] + [HumanMessage(content=f"Start Date: {user_input}").model_dump()]  # Fix here
                         }
                         return jsonify({
                             "state": new_state,
@@ -516,7 +512,14 @@ def health_check():
         "version": "1.0.0"
     })
 
+# Add a root route for easy testing
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify({
+        "status": "API is running",
+        "endpoints": ["/init", "/update", "/health"]
+    })
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))  # Always use env var first
     app.run(host='0.0.0.0', port=port)  # Crucial for cloud deployment
-   
