@@ -38,7 +38,7 @@ function ResponsiveAppBar() {
   
   const [setUser] = useState(null);
     const [userf, setUserf] = useState({ name: "", e: "" }); // ✅ Clear initial state
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`${process.env.REACT_APP_URL}/getmyprofile`, { credentials: 'include' })
