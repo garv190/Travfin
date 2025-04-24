@@ -439,7 +439,7 @@ useEffect(() => {
     if (currentSegment === 'expenses') {
       setError("Please select a trip to view expenses");
     } else if (currentSegment.startsWith('expenses/')) {
-      const tripId = currentSegment.split('/')[1];
+      const tripId = currentSegment.split('/')[2];
       if (tripId) {
         fetchExpenses(tripId);
       } else {
