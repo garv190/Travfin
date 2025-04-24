@@ -759,43 +759,101 @@ const fetchTrips = React.useCallback(async () => {
 
 
 
+// const handleFileChange = async (e) => {
+//   const file = e.target.files[0];
+//   if (!file) return;
+  
+//   setUploadLoading(true); // Add this state to show loading
+  
+//   try {
+//     const data = new FormData();
+//     data.append("file", file);
+//     data.append("upload_preset", process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
+    
+//     const res = await fetch(
+//       `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+//       {
+//         method: "POST",
+//         body: data,
+//       }
+//     );
+    
+//     const uploadResult = await res.json();
+    
+//     if (uploadResult.secure_url) {
+//       setBillFile(file);
+//       setBillPreview(URL.createObjectURL(file));
+//       setBillUrl(uploadResult.secure_url); // Store the URL to send with expense
+//       console.log("Image uploaded:", uploadResult.secure_url);
+//     } else {
+//       console.error("Upload failed:", uploadResult);
+//       alert("Failed to upload image. Please try again.");
+//     }
+//   } catch (error) {
+//     console.error("Error uploading image:", error);
+//     alert("Error uploading image. Please try again.");
+//   } finally {
+//     setUploadLoading(false);
+//   }
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
 const handleFileChange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  
-  setUploadLoading(true); // Add this state to show loading
+
+  setUploadLoading(true);
   
   try {
+    // Clear previous uploads
+    setBillUrl("");
+    setBillPreview(null);
+
     const data = new FormData();
     data.append("file", file);
     data.append("upload_preset", process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
-    
+
     const res = await fetch(
       `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      {
-        method: "POST",
-        body: data,
-      }
+      { method: "POST", body: data }
     );
-    
+
+    if (!res.ok) throw new Error(`Upload failed: ${res.statusText}`);
+
     const uploadResult = await res.json();
     
-    if (uploadResult.secure_url) {
-      setBillFile(file);
-      setBillPreview(URL.createObjectURL(file));
-      setBillUrl(uploadResult.secure_url); // Store the URL to send with expense
-      console.log("Image uploaded:", uploadResult.secure_url);
-    } else {
-      console.error("Upload failed:", uploadResult);
-      alert("Failed to upload image. Please try again.");
+    if (!uploadResult.secure_url) {
+      throw new Error("No URL returned from Cloudinary");
     }
+
+    setBillFile(file);
+    setBillPreview(URL.createObjectURL(file));
+    setBillUrl(uploadResult.secure_url);
+
   } catch (error) {
-    console.error("Error uploading image:", error);
-    alert("Error uploading image. Please try again.");
+    console.error("Upload failed:", error);
+    setError("Bill upload failed. Please try again.");
+    setBillFile(null);
+    setBillPreview(null);
+    setBillUrl("");
   } finally {
     setUploadLoading(false);
   }
 };
+
+
+
 
 
   return (
@@ -1001,9 +1059,9 @@ const handleFileChange = async (e) => {
 
                     <StyledButton 
                       type="submit"
-                      disabled={expenseLoading}
+                      disabled={expenseLoading || uploadLoading}
                     >
-                      {expenseLoading ? <CircularProgress size={24} /> : "Add Expense"}
+                      {(expenseLoading || uploadLoading) ? <CircularProgress size={24} /> : "Add Expense"}
                     </StyledButton>
                   </form>
                 </div>
