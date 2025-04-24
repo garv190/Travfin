@@ -216,7 +216,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
  // Update your fetchTripTransactions function to properly handle the data
  const fetchTripTransactions = async (tripId) => {
   try {
-    console.log("Fetching transactions for trip:", tripId);
+    // console.log("Fetching transactions for trip:", tripId);
     const response = await fetch(`${process.env.REACT_APP_URL}/transactions?tripId=${tripId}`, {
       method: 'GET',
       credentials: "include",
@@ -230,7 +230,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
     }
     
     const data = await response.json();
-    console.log("Transaction data received:", data);
+    // console.log("Transaction data received:", data);
     
     if (data.success) {
       // Set all transactions
@@ -240,7 +240,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
       const userTrans = data.userTransactions || { youOwe: [], youAreOwed: [] };
       setUserTransactions(userTrans);
       
-      console.log("User transactions:", userTrans);
+      // console.log("User transactions:", userTrans);
     } else {
       throw new Error(data.message || "Failed to load transactions");
     }
@@ -258,7 +258,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
     // Only run this when the trips array changes
     if (!Array.isArray(trips) || trips.length === 0) return;
     
-    console.log("Building navigation with trips:", trips);
+    // console.log("Building navigation with trips:", trips);
     
     const baseNav = [
       {
@@ -327,18 +327,18 @@ const [uploadLoading, setUploadLoading] = useState(false);
       }
     ];
     
-    console.log("Setting navigation with children:", baseNav[6].children);
+    // console.log("Setting navigation with children:", baseNav[6].children);
     setDynamicNavigation(baseNav);
   }, [trips]);
 
   useEffect(() => {
     const updatedNavigation = NAVIGATION.map(item => {
       if (item.segment === 'expenses') {
-        console.log("Building expenses navigation with trips:", trips);
+        // console.log("Building expenses navigation with trips:", trips);
         return {
           ...item,
           children: trips.map(trip => {
-            console.log("Trip for nav:", trip);
+            // console.log("Trip for nav:", trip);
             return {
               segment: `expenses/${trip._id}`,
               title: trip.name,
@@ -350,7 +350,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
       return item;
     });
     
-    console.log("Updated navigation:", updatedNavigation);
+    // console.log("Updated navigation:", updatedNavigation);
     setDynamicNavigation(updatedNavigation);
   }, [trips]);
 
@@ -396,7 +396,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
     pathname: `/${currentSegment}`,
     searchParams: new URLSearchParams(),
     navigate: (path) => {
-      console.log("Navigating to:", path);
+      // console.log("Navigating to:", path);
       // Extract segment from path properly
       let newSegment;
       if (path.startsWith('/')) {
@@ -404,7 +404,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
       } else {
         newSegment = path;
       }
-      console.log("Setting current segment to:", newSegment);
+      // console.log("Setting current segment to:", newSegment);
       setCurrentSegment(newSegment);
     },
   };
@@ -484,7 +484,7 @@ useEffect(() => {
 
 const fetchTrips = React.useCallback(async () => {
   try {
-    console.log("Fetching trips...");
+    // console.log("Fetching trips...");
     const response = await fetch(`${process.env.REACT_APP_URL}/user/trips`, {
       method: "GET",
       credentials: "include",
@@ -495,13 +495,13 @@ const fetchTrips = React.useCallback(async () => {
     }
     
     const data = await response.json();
-    console.log("Fetched trips data:", data);
+    // console.log("Fetched trips data:", data);
     
     if (data.success) {
       setTrips(data.trips);
       // Check for valid IDs
       data.trips.forEach(trip => {
-        console.log(`Trip ${trip.name} has ID: ${trip._id}, valid format: ${/^[0-9a-fA-F]{24}$/.test(trip._id)}`);
+        // console.log(`Trip ${trip.name} has ID: ${trip._id}, valid format: ${/^[0-9a-fA-F]{24}$/.test(trip._id)}`);
       });
     }
     

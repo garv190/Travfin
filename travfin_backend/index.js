@@ -824,7 +824,7 @@ app.get('/user/trips', authenticateToken, async (req, res) => {
 
 
 function authenticateToken(req, res, next) {
-  console.log("Request Headers:", req); // Log headers for debugging
+  // console.log("Request Headers:", req); // Log headers for debugging
 
     let token = req.cookies?.accesstoken;
 
@@ -841,7 +841,7 @@ function authenticateToken(req, res, next) {
       token = req.query.token;
   }
   
-  console.log("Token used:", token ? "Present" : "Not found");
+  // console.log("Token used:", token ? "Present" : "Not found");
 
   if (!token) return res.status(401).json({ message: "Unauthorized - No token provided", success: false });
 
