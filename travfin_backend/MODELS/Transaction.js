@@ -20,6 +20,13 @@ const transactionSchema = new Schema({
     ref: 'mongosu',
     required: true
   },
+
+
+  billUrl: {
+    type: String,
+    default: ''  // Empty string as default if no bill is attached
+  },
+
   shares: [{
     user: { 
       type: Schema.Types.ObjectId, 

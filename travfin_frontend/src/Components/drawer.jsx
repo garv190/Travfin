@@ -179,7 +179,7 @@ const [uploadLoading, setUploadLoading] = useState(false);
 
 
   const handlePayment = async (transactionId, amount) => {
-    navigate('/paymentprofile')
+    navigate(`/paymentprofile?id=${transactionId}`);
     setPaymentLoading(true);
     setSelectedTransactionId(transactionId);
     
@@ -642,8 +642,9 @@ const fetchTrips = React.useCallback(async () => {
           tripId: selectedTrip,
           amount: parseFloat(amount),
           description,
+          billUrl: billUrl,// Add this line to include the bill URL
           shares,
-          billUrl: billUrl // Add this line to include the bill URL
+     
         }),
       });
   

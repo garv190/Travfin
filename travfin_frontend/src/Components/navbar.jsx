@@ -29,7 +29,7 @@ const settings = [
   { value: 'Profile', url: '/profile' },
   { value: 'Sign Up', url: '/signup' },
   { value: 'Log In', url: '/signin' },
-  { value: 'Logout', url: '/logout' }
+  // { value: 'Logout', url: '/logout' }
 ];
 
 function ResponsiveAppBar() {
