@@ -129,7 +129,7 @@ export default function DashboardLayoutBasic(props) {
 const [dynamicNavigation, setDynamicNavigation] = useState(NAVIGATION);
   const { window } = props;
   const navigate = useNavigate();
-  const [user, setUser] = useState({ name: "", email: "" });
+  const [user, setUser] = useState({ name: "TravFin Welcomes You", email: "" });
   const [loading, setLoading] = useState(true);
   const [currentSegment, setCurrentSegment] = useState('dashboard');
   const [error, setError] = useState(null);
@@ -171,7 +171,11 @@ const [billUrl, setBillUrl] = useState('');
 // eslint-disable-next-line 
 const [uploadLoading, setUploadLoading] = useState(false);
 
-  
+const [showAddPersonForm, setShowAddPersonForm] = useState(false); // To toggle the Add Person form
+const [newPersonEmail, setNewPersonEmail] = useState(''); // To store the email of the new person
+const [addPersonLoading, setAddPersonLoading] = useState(false); // To show loading state during API call
+const [addPersonError, setAddPersonError] = useState(null); // To store any error messages
+const [addPersonSuccess, setAddPersonSuccess] = useState(null); // To store success messages
 
 
 
@@ -456,31 +460,66 @@ useEffect(() => {
   
 
 // Add this useEffect to load participants when trip is selected
-useEffect(() => {
-  const fetchParticipants = async () => {
-    if (selectedTrip) {
-      try {
-        const response = await fetch(`${process.env.REACT_APP_URL}/trips/${selectedTrip}`, {
-          method: "GET",
-          credentials: "include",
+// useEffect(() => {
+//   const fetchParticipants = async () => {
+//     if (selectedTrip) {
+//       try {
+//         const response = await fetch(`${process.env.REACT_APP_URL}/trips/${selectedTrip}`, {
+//           method: "GET",
+//           credentials: "include",
+//         });
+//         const data = await response.json();
+//         if (data.success) {
+//           setParticipants(data.trip.participants);
+//           // Initialize shares
+//           const initialShares = {};
+//           data.trip.participants.forEach(p => {
+//             initialShares[p._id] = 0;
+//           });
+//           setShares(initialShares);
+//         }
+//       } catch (error) {
+//         setError("Failed to load trip details");
+//       }
+//     }
+//   };
+//   fetchParticipants();
+// }, [selectedTrip]);
+
+
+const fetchParticipants = React.useCallback(async () => {
+  if (selectedTrip) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_URL}/trips/${selectedTrip}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (data.success) {
+        setParticipants(data.trip.participants);
+        // Initialize shares
+        const initialShares = {};
+        data.trip.participants.forEach((p) => {
+          initialShares[p._id] = 0;
         });
-        const data = await response.json();
-        if (data.success) {
-          setParticipants(data.trip.participants);
-          // Initialize shares
-          const initialShares = {};
-          data.trip.participants.forEach(p => {
-            initialShares[p._id] = 0;
-          });
-          setShares(initialShares);
-        }
-      } catch (error) {
-        setError("Failed to load trip details");
+        setShares(initialShares);
       }
+    } catch (error) {
+      setError("Failed to load trip details");
     }
-  };
+  }
+}, [selectedTrip]); // Add 'selectedTrip' as a dependency
+
+
+
+useEffect(() => {
   fetchParticipants();
-}, [selectedTrip]);
+}, [fetchParticipants]); // Include 'fetchParticipants' in the dependency array
+
+
+
+
+
 
 const fetchTrips = React.useCallback(async () => {
   try {
@@ -800,7 +839,37 @@ const fetchTrips = React.useCallback(async () => {
 
 
 
+const handleAddPerson = async () => {
+  if (!newPersonEmail) {
+    setAddPersonError("Please enter an email address.");
+    return;
+  }
 
+  setAddPersonLoading(true);
+  setAddPersonError(null);
+  setAddPersonSuccess(null);
+
+  try {
+    const response = await fetch(`${process.env.REACT_APP_URL}/trips/${selectedTrip}/add-person`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email: newPersonEmail }),
+    });
+
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to add person.");
+
+    setAddPersonSuccess("Person added successfully!");
+    setNewPersonEmail("");
+    fetchParticipants(); // Refresh participants list
+  } catch (error) {
+    setAddPersonError(error.message);
+  } finally {
+    setAddPersonLoading(false);
+  }
+};
 
 
 
@@ -876,7 +945,7 @@ const handleFileChange = async (e) => {
             <Grid item xs={12}>
               <div style={{ padding: '16px' }}>
                 <h2>Hello <span style={{ fontWeight: 'bold' }}>{user.name}</span>!</h2>
-                <p>Email: {user.email}</p>
+                {/* <p>Email: {user.email}</p> */}
                 
                 {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
                 {success && <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>}
@@ -1087,6 +1156,41 @@ const handleFileChange = async (e) => {
           <h2>Expenses for {
             trips.find(t => t._id === currentSegment.split('/')[1])?.name || "Selected Trip"
           }</h2>
+
+
+
+       <StyledButton
+        onClick={() => setShowAddPersonForm(true)}
+        style={{ marginBottom: '16px' }}
+       >
+        Add Person to Trip
+      </StyledButton>
+
+
+      {showAddPersonForm && (
+        <div style={{ marginBottom: '16px', padding: '16px', border: '1px solid #ccc', borderRadius: '8px' }}>
+          <h3>Add a New Person to the Trip</h3>
+          <InputField
+            placeholder="Enter person's email"
+            value={newPersonEmail}
+            onChange={(e) => setNewPersonEmail(e.target.value)}
+          />
+          <StyledButton
+            onClick={handleAddPerson}
+            disabled={addPersonLoading}
+          >
+            {addPersonLoading ? <CircularProgress size={24} /> : "Add Person"}
+          </StyledButton>
+          {addPersonError && <Alert severity="error">{addPersonError}</Alert>}
+          {addPersonSuccess && <Alert severity="success">{addPersonSuccess}</Alert>}
+        </div>
+      )}
+
+
+
+
+
+
           
           {/* Transaction Summary - Revamped with point-by-point display */}
           {/* <Paper elevation={2} style={{ padding: '24px', marginBottom: '24px', borderRadius: '8px' }}> */}

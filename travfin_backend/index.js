@@ -429,6 +429,57 @@ app.get('/trips/:tripId', authenticateToken, async (req, res) => {
 
 
 
+app.post('/trips/:tripId/add-person', authenticateToken, async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required." });
+    }
+
+    // Validate trip
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({ success: false, message: "Trip not found." });
+    }
+
+    // Check if the user is authorized to add participants
+    if (!trip.participants.includes(req.user.id)) {
+      return res.status(403).json({ success: false, message: "Not authorized to add participants to this trip." });
+    }
+
+    // Find the user by email
+    const userToAdd = await User.findOne({ email });
+    if (!userToAdd) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Check if the user is already a participant
+    if (trip.participants.includes(userToAdd._id)) {
+      return res.status(400).json({ success: false, message: "User is already a participant in this trip." });
+    }
+
+    // Add the user to the trip
+    trip.participants.push(userToAdd._id);
+    await trip.save();
+
+    res.status(200).json({ success: true, message: "User added to the trip successfully." });
+  } catch (error) {
+    console.error("Error adding person to trip:", error);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+
+
+
+
+
+
+
+
+
 
 app.post('/transactions', authenticateToken, async (req, res) => {
   try {
