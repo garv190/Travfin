@@ -70,8 +70,8 @@ app.post('/signup', async (req, res, next) => {
             alphabets: false
         });
 
-        const salt = await genSaltSync(10);
-        const hash = await hashSync(password, salt);
+        const salt = genSaltSync(10);
+        const hash = hashSync(password, salt);
 
         const newTempUser = new TempUser({
             name,
